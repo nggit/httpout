@@ -1,0 +1,4 @@
+
+print('Hi')
+
+raise ValueError
