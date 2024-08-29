@@ -26,7 +26,7 @@ So if you just change the script there is no need to reload the server process, 
 Keep in mind this may not work for running complex python scripts,
 e.g. running other server processes or multithreaded applications as each route is not a real main thread.
 
-![httpout](example/static/hello.gif)
+![httpout](https://raw.githubusercontent.com/nggit/httpout/main/example/static/hello.gif)
 
 ## Install
 ```
@@ -94,6 +94,21 @@ No need to import anything to access these, except [`__main__`](https://docs.pyt
 - `wait()` , runs a coroutine and wait until done
 - `__main__`, a reference to your main route, available across your submodule imports
 - `__server__`, a dict object containing basic HTTP request information and etc.
+
+## Security
+It's important to note that httpout only focuses on request security;
+to ensure that [path traversal](https://en.wikipedia.org/wiki/Directory_traversal_attack) through the URL never happens.
+
+httpout will never validate the script you write,
+you can still access objects like `os`, `eval()`, `open()`, even traversal out of the document root.
+So this stage is your responsibility.
+
+FYI, PHP used to have something called [Safe Mode](https://web.archive.org/web/20201014032613/https://www.php.net/manual/en/features.safe-mode.php), but it was deemed *architecturally incorrect*, so they removed it.
+
+> The PHP safe mode is an attempt to solve the shared-server security problem.
+> It is architecturally incorrect to try to solve this problem at the PHP level,
+> but since the alternatives at the web server and OS levels aren't very realistic,
+> many people, especially ISP's, use safe mode for now.
 
 ## License
 MIT License
