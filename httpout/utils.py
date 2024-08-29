@@ -23,8 +23,7 @@ def exec_module(module, code=None):
 
         return code
 
-    with open(module.__file__, 'r') as f:
-        exec(f.read(), module.__dict__)  # nosec B102
+    exec(code, module.__dict__)  # nosec B102
 
 
 # https://developer.mozilla.org
