@@ -56,9 +56,19 @@ python3 -m httpout --port 8000 example/
 and your `hello.py` can be accessed at [http://localhost:8000/hello.py](http://localhost:8000/hello.py).
 If you don't want the `.py` suffix in the URL, you can instead create a `hello/` folder with `index.py` inside.
 
+## Run programmatically
+```python
+# server.py
+from httpout import app
+
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=8000, document_root='example/', debug=True)
+```
+
 ## Features
 httpout is designed to be fun. It's not built for perfectionists. httpout has:
-- A [hybrid async and sync](#hybrid-async-and-sync), the two worlds can coexist in your script seamlessly
+- A [hybrid async and sync](#hybrid-async-and-sync), the two worlds can coexist in your script seamlessly; It's not yet time to drop your favorite synchronous library
 - More lightweight than running CGI scripts
 - Your `print()`s are sent immediately line by line without waiting for the script to finish like a typical CGI
 - No need for a templating engine, just do `if-else` and `print()` making your script portable for both CLI and web

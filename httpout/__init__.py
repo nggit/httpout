@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
