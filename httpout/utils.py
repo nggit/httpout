@@ -4,12 +4,11 @@ __all__ = ('is_safe_path', 'exec_module', 'mime_types')
 
 import re  # noqa: E402
 
-pattern = r'^[\w\-\/\.]{1,255}$'
-compiled_pattern = re.compile(pattern)
+pattern = re.compile(r'^[\w\-\/\.]{1,255}$')
 
 
 def is_safe_path(path):
-    if not compiled_pattern.match(path) or '..' in path:
+    if not pattern.match(path) or '..' in path:
         return False
 
     return True

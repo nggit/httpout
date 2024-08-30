@@ -39,10 +39,6 @@ async def httpout_worker_start(**worker):
     def wait(coro, timeout=None):
         return run(coro).result(timeout=timeout)
 
-    logger.info('entering directory: %s', document_root)
-    os.chdir(document_root)
-    sys.path.insert(0, document_root)
-
     python_import = builtins.__import__
 
     def httpout_import(name, globals=None, locals=None, fromlist=(), level=0):
@@ -143,6 +139,10 @@ async def httpout_worker_start(**worker):
 
     worker_ctx.executor.start()
 
+    logger.info('entering directory: %s', document_root)
+    os.chdir(document_root)
+    sys.path.insert(0, document_root)
+
 
 @app.on_worker_stop
 async def httpout_worker_stop(**worker):
@@ -171,6 +171,10 @@ async def httpout_on_request(**server):
     worker_ctx = server['worker']
     document_root = worker_ctx.options['document_root']
 
+    # no need to unquote path
+    # in fact, the '%' character in the path will be rejected.
+    # httpout strictly uses A-Z a-z 0-9 - _ . for directory names
+    # which does not need the use of percent-encoding
     path = request.path.decode('latin-1')
     module_path = os.path.abspath(
         os.path.join(document_root, os.path.normpath(path.lstrip('/')))
