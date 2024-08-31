@@ -89,7 +89,17 @@ class TestHTTP(unittest.TestCase):
                                    version='1.1')
 
         self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
-        self.assertEqual(body, b'E\r\nHello, World!\n\r\n0\r\n\r\n')
+        self.assertEqual(body, b'7\r\nHello, \r\n0\r\n\r\n')
+
+    def test_exit_str(self):
+        header, body = getcontents(host=HTTP_HOST,
+                                   port=HTTP_PORT,
+                                   method='GET',
+                                   url='/exit.py?World',
+                                   version='1.1')
+
+        self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
+        self.assertEqual(body, b'7\r\nHello, \r\n7\r\nWorld!\n\r\n0\r\n\r\n')
 
     def test_static_file(self):
         header, body = getcontents(host=HTTP_HOST,

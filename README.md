@@ -65,7 +65,7 @@ import sys
 
 
 method_str = __server__.REQUEST_METHOD
-method_byte = __server__.request.method
+method_bytes = __server__.request.method
 
 
 if method_str != 'POST':
@@ -76,7 +76,7 @@ if method_str != 'POST':
 
 form_data = wait(__server__.request.form())
 
-print(method_str, method_byte, form_data)
+print(method_str, method_bytes, form_data)
 ```
 
 It can also be written this way:
@@ -86,7 +86,7 @@ import sys
 
 
 method_str = __server__.REQUEST_METHOD
-method_byte = __server__.request.method
+method_bytes = __server__.request.method
 
 
 if method_str != 'POST':
@@ -98,7 +98,7 @@ if method_str != 'POST':
 async def main():
     form_data = await __server__.request.form()
 
-    print(method_str, method_byte, form_data)
+    print(method_str, method_bytes, form_data)
 
 
 wait(main())
