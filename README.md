@@ -56,6 +56,45 @@ python3 -m httpout --port 8000 example/
 and your `hello.py` can be accessed at [http://localhost:8000/hello.py](http://localhost:8000/hello.py).
 If you don't want the `.py` suffix in the URL, you can instead create a `hello/` folder with `index.py` inside.
 
+## Handling forms
+This is an overview of how to view request methods and read form data.
+
+```python
+# form.py
+from urllib.parse import quote
+
+
+method_str = __server__.REQUEST_METHOD
+method_byte = __server__.request.method
+form_data = wait(__server__.request.form())
+
+print(quote(method_str), quote(method_byte), form_data)
+```
+
+It can also be written this way:
+```python
+# form.py
+from urllib.parse import quote
+
+
+method_str = __server__.REQUEST_METHOD
+method_byte = __server__.request.method
+
+
+async def main():
+    form_data = await __server__.request.form()
+
+    print(quote(method_str), quote(method_byte), form_data)
+
+
+wait(main())
+```
+
+Then you can do:
+```
+curl -d foo=bar http://localhost:8000/form.py
+```
+
 ## Run programmatically
 ```python
 # server.py
