@@ -61,30 +61,44 @@ This is an overview of how to view request methods and read form data.
 
 ```python
 # form.py
-from urllib.parse import quote
+import sys
 
 
 method_str = __server__.REQUEST_METHOD
 method_byte = __server__.request.method
+
+
+if method_str != 'POST':
+    __server__.response.set_status(405, 'Method Not Allowed')
+    print('Method Not Allowed')
+    sys.exit()
+
+
 form_data = wait(__server__.request.form())
 
-print(quote(method_str), quote(method_byte), form_data)
+print(method_str, method_byte, form_data)
 ```
 
 It can also be written this way:
 ```python
 # form.py
-from urllib.parse import quote
+import sys
 
 
 method_str = __server__.REQUEST_METHOD
 method_byte = __server__.request.method
 
 
+if method_str != 'POST':
+    __server__.response.set_status(405, 'Method Not Allowed')
+    print('Method Not Allowed')
+    sys.exit()
+
+
 async def main():
     form_data = await __server__.request.form()
 
-    print(quote(method_str), quote(method_byte), form_data)
+    print(method_str, method_byte, form_data)
 
 
 wait(main())
