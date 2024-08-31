@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -284,8 +284,9 @@ async def httpout_on_request(**server):
                         f'{html_escape(str(exc))}</li></ul>\n'
                         .encode()
                     )
-            elif isinstance(exc, SystemExit) and isinstance(exc.code, str):
-                await response.write(exc.code.encode())
+            elif isinstance(exc, SystemExit):
+                if exc.code:
+                    await response.write(str(exc.code).encode())
             else:
                 request.protocol.print_exception(exc)
         # EOF
