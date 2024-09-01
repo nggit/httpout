@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -40,9 +40,9 @@ async def httpout_worker_start(**worker):
         return run(coro).result(timeout=timeout)
 
     def load_module(name, globals, level=0):
-        if name in globals['__main__'].__modules__:
+        if name in globals['__main__'].__server__.modules:
             # already imported
-            return globals['__main__'].__modules__[name]
+            return globals['__main__'].__server__.modules[name]
 
         module_path = os.path.join(
             document_root,
@@ -86,7 +86,7 @@ async def httpout_worker_start(**worker):
             module.print = globals['__main__'].print
             module.run = run
             module.wait = wait
-            globals['__main__'].__modules__[name] = module
+            globals['__main__'].__server__.modules[name] = module
 
             exec_module(module)
             return module
@@ -127,7 +127,9 @@ async def httpout_worker_start(**worker):
                 return module
 
             if name == 'httpout':
-                module = globals['__main__'].__modules__[globals['__name__']]
+                module = globals['__main__'].__server__.modules[
+                    globals['__name__']
+                ]
 
                 # from httpout import request, response
                 for child in fromlist:
@@ -244,7 +246,7 @@ async def httpout_on_request(**server):
         module = ModuleType('__main__')
         module.__file__ = module_path
         module.__main__ = module
-        module.__modules__ = {'__main__': module}
+        __server__.modules = {'__main__': module}
         module.__server__ = __server__
         module.print = write
         module.run = worker_ctx.run
