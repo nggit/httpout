@@ -1,7 +1,8 @@
 
+from httpout import response
 from bar import world
 
 
 def hello():
-    print('Hello')
+    wait(response.write(b'Hello\n'))
     world()

@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -86,7 +86,9 @@ async def httpout_worker_start(**worker):
             module.print = globals['__main__'].print
             module.run = run
             module.wait = wait
+            globals['__main__'].__modules__[name] = module
 
+            exec_module(module)
             return module
 
     python_import = builtins.__import__
@@ -115,24 +117,25 @@ async def httpout_worker_start(**worker):
             module = create_module(name, globals, level)
 
             if module:
-                if name not in globals['__main__'].__modules__:
-                    globals['__main__'].__modules__[name] = module
-                    exec_module(module)
-
                 if oldname == '':
                     # relative import
                     for child in fromlist:
                         module.__dict__[child] = create_module(
                             f'{name}.{child}', globals
                         )
-                        exec_module(module.__dict__[child])
 
                 return module
 
-        return python_import(
-            name, globals=globals,
-            locals=locals, fromlist=fromlist, level=level
-        )
+            if name == 'httpout':
+                module = globals['__main__'].__modules__[globals['__name__']]
+
+                # from httpout import request, response
+                for child in fromlist:
+                    module.__dict__[child] = module.__server__[child]
+
+                return module
+
+        return python_import(name, globals, locals, fromlist, level)
 
     builtins.__import__ = httpout_import
 
@@ -241,7 +244,7 @@ async def httpout_on_request(**server):
         module = ModuleType('__main__')
         module.__file__ = module_path
         module.__main__ = module
-        module.__modules__ = {}
+        module.__modules__ = {'__main__': module}
         module.__server__ = __server__
         module.print = write
         module.run = worker_ctx.run
