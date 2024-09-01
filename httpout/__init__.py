@@ -39,6 +39,56 @@ async def httpout_worker_start(**worker):
     def wait(coro, timeout=None):
         return run(coro).result(timeout=timeout)
 
+    def create_module(name, globals, level=0):
+        if name in globals['__main__'].__modules__:
+            # already imported
+            return globals['__main__'].__modules__[name]
+
+        module_path = os.path.join(
+            document_root,
+            name.replace('.', os.sep), '__init__.py'
+        )
+
+        if not os.path.isfile(module_path):
+            module_path = os.path.join(
+                document_root, name.replace('.', os.sep) + '.py'
+            )
+
+        if os.path.isfile(module_path):
+            if name in sys.modules:
+                if ('__file__' in sys.modules[name].__dict__ and
+                        sys.modules[name].__file__
+                        .startswith(document_root)):
+                    del sys.modules[name]
+
+                raise ImportError(f'module name conflict: {name}')
+
+            logger.info(
+                'httpout: %d: %s: importing %s',
+                globals['__main__'].__server__.request.socket.fileno(),
+                globals['__name__'],
+                name
+            )
+            module = ModuleType(name)
+            module.__file__ = module_path
+            module.__package__ = (
+                os.path.dirname(module_path)[len(document_root):]
+                .lstrip(os.sep)
+                .rsplit(os.sep, level)[0]
+                .replace(os.sep, '.')
+            )
+
+            if name == module.__package__:
+                module.__path__ = [os.path.dirname(module_path)]
+
+            module.__main__ = globals['__main__']
+            module.__server__ = globals['__main__'].__server__
+            module.print = globals['__main__'].print
+            module.run = run
+            module.wait = wait
+
+            return module
+
     python_import = builtins.__import__
 
     def httpout_import(name, globals=None, locals=None, fromlist=(), level=0):
@@ -57,71 +107,25 @@ async def httpout_worker_start(**worker):
             oldname = name
 
             if level > 0:
-                parent = globals['__name__'] + '.'
+                name = globals['__name__'].rsplit('.', level)[0]
 
-                if name == '':
-                    parent += '.'.join(fromlist) + '.'
-                    name = parent.rsplit('.', level)[0]
-                else:
-                    name = parent.rsplit('.', level)[0] + '.' + name
+                if oldname != '':
+                    name = f'{name}.{oldname}'
 
-            if name in globals['__main__'].__modules__:
-                # avoid endless import
-                return globals['__main__'].__modules__[name]
+            module = create_module(name, globals, level)
 
-            module_path = os.path.join(
-                document_root,
-                name.replace('.', os.sep), '__init__.py'
-            )
-
-            if not os.path.isfile(module_path):
-                module_path = os.path.join(
-                    document_root, name.replace('.', os.sep) + '.py'
-                )
-
-            if os.path.isfile(module_path):
-                if name in sys.modules:
-                    if ('__file__' in sys.modules[name].__dict__ and
-                            sys.modules[name].__file__
-                            .startswith(document_root)):
-                        del sys.modules[name]
-
-                    raise ImportError(f'module name conflict: {name}')
-
-                logger.info(
-                    'httpout: %d: %s: importing %s',
-                    globals['__main__'].__server__.request.socket.fileno(),
-                    globals['__name__'],
-                    name
-                )
-                module = ModuleType(name)
-                module.__file__ = module_path
-                module.__package__ = (
-                    os.path.dirname(module_path)[len(document_root):]
-                    .lstrip(os.sep)
-                    .rsplit(os.sep, level)[0]
-                    .replace(os.sep, '.')
-                )
-
-                if name == module.__package__:
-                    module.__path__ = [os.path.dirname(module_path)]
-
-                module.__main__ = globals['__main__']
-                module.__server__ = globals['__main__'].__server__
-                module.print = globals['__main__'].print
-                module.run = run
-                module.wait = wait
-                globals['__main__'].__modules__[name] = module
-
-                exec_module(module)
+            if module:
+                if name not in globals['__main__'].__modules__:
+                    globals['__main__'].__modules__[name] = module
+                    exec_module(module)
 
                 if oldname == '':
-                    # relative import. return itself
-                    globals['__main__'].__modules__[name].__dict__[
-                        name.split('.', level)[-1]
-                    ] = module
-
-                    return globals['__main__'].__modules__[name]
+                    # relative import
+                    for child in fromlist:
+                        module.__dict__[child] = create_module(
+                            f'{name}.{child}', globals
+                        )
+                        exec_module(module.__dict__[child])
 
                 return module
 
