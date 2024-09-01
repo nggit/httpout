@@ -39,7 +39,7 @@ async def httpout_worker_start(**worker):
     def wait(coro, timeout=None):
         return run(coro).result(timeout=timeout)
 
-    def create_module(name, globals, level=0):
+    def load_module(name, globals, level=0):
         if name in globals['__main__'].__modules__:
             # already imported
             return globals['__main__'].__modules__[name]
@@ -114,13 +114,13 @@ async def httpout_worker_start(**worker):
                 if oldname != '':
                     name = f'{name}.{oldname}'
 
-            module = create_module(name, globals, level)
+            module = load_module(name, globals, level)
 
             if module:
                 if oldname == '':
                     # relative import
                     for child in fromlist:
-                        module.__dict__[child] = create_module(
+                        module.__dict__[child] = load_module(
                             f'{name}.{child}', globals
                         )
 
