@@ -113,16 +113,6 @@ Then you can do:
 curl -d foo=bar http://localhost:8000/form.py
 ```
 
-## Run programmatically
-```python
-# server.py
-from httpout import app
-
-
-if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8000, document_root='example/', debug=True)
-```
-
 ## Features
 httpout is designed to be fun. It's not built for perfectionists. httpout has:
 - A [hybrid async and sync](#hybrid-async-and-sync), the two worlds can coexist in your script seamlessly; It's not yet time to drop your favorite synchronous library
@@ -158,9 +148,10 @@ where `fut` is a [concurrent.futures.Future](https://docs.python.org/3/library/c
 No need to import anything to access these, except [`__main__`](https://docs.python.org/3/library/__main__.html) which can be imported to honor the semantics.
 - `print()`
 - `run()`, runs a coroutine without waiting, it returns a [concurrent.futures.Future](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future) object
-- `wait()` , runs a coroutine and wait until done
+- `wait()` , runs a coroutine and wait until done, it returns a result
 - `__main__`, a reference to your main route, available across your submodule imports
 - `__server__`, a dict object containing basic HTTP request information and etc.
+- `__globals__`, a worker/app-level context. to initialize objects at worker start, you can place them in `__globals__.py`
 
 ## Security
 It's important to note that httpout only focuses on request security;

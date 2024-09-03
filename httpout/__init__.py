@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -26,6 +26,7 @@ app = Tremolo()
 @app.on_worker_start
 async def httpout_worker_start(**worker):
     worker_ctx = worker['context']
+    app = worker['app']
     logger = worker['logger']
     thread_pool_size = worker_ctx.options.get('thread_pool_size', 5)
     document_root = os.path.abspath(
@@ -152,10 +153,27 @@ async def httpout_worker_start(**worker):
     os.chdir(document_root)
     sys.path.insert(0, document_root)
 
+    # provides __globals__, a worker-level context
+    builtins.__globals__ = ModuleType('__globals__')  # noqa: F821
+    __globals__.__file__ = os.path.join(document_root, '__globals__.py')  # noqa: E501,F821
+    app.ctx = Context()
+
+    if os.path.isfile(__globals__.__file__):  # noqa: F821
+        exec_module(__globals__)  # noqa: F821
+
+        if '__enter__' in __globals__.__dict__:  # noqa: F821
+            __globals__.__enter__(app)  # noqa: F821
+
+    app.add_middleware(httpout_on_request, 'request')
+
 
 @app.on_worker_stop
 async def httpout_worker_stop(**worker):
     worker_ctx = worker['context']
+    app = worker['app']
+
+    if '__exit__' in __globals__.__dict__:  # noqa: F821
+        __globals__.__exit__(app)  # noqa: F821
 
     await worker_ctx.executor.shutdown()
 
@@ -166,13 +184,11 @@ async def httpout_on_close(**server):
     worker_ctx = server['worker']
     logger = server['logger']
 
-    if ('module_path' in request_ctx and
-            request_ctx.module_path in worker_ctx.caches):
-        del worker_ctx.caches[request_ctx.module_path]
+    if 'module_path' in request_ctx:
+        worker_ctx.caches[request_ctx.module_path] = None
         logger.info('httpout: cache deleted: %s', request_ctx.module_path)
 
 
-@app.on_request
 async def httpout_on_request(**server):
     request = server['request']
     response = server['response']
