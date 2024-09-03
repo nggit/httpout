@@ -148,7 +148,7 @@ where `fut` is a [concurrent.futures.Future](https://docs.python.org/3/library/c
 No need to import anything to access these, except [`__main__`](https://docs.python.org/3/library/__main__.html) which can be imported to honor the semantics.
 - `print()`
 - `run()`, runs a coroutine without waiting, it returns a [concurrent.futures.Future](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future) object
-- `wait()` , runs a coroutine and wait until done, it returns a result
+- `wait()` , runs a coroutine and wait until done, it returns the result
 - `__main__`, a reference to your main route, available across your submodule imports
 - `__server__`, a dict object containing basic HTTP request information and etc.
 - `__globals__`, a worker/app-level context. to initialize objects at worker start, you can place them in \_\_globals\_\_.py

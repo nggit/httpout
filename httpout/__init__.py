@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -172,10 +172,11 @@ async def httpout_worker_stop(**worker):
     worker_ctx = worker['context']
     app = worker['app']
 
-    if '__exit__' in __globals__.__dict__:  # noqa: F821
-        __globals__.__exit__(app)  # noqa: F821
-
-    await worker_ctx.executor.shutdown()
+    try:
+        if '__exit__' in __globals__.__dict__:  # noqa: F821
+            __globals__.__exit__(app)  # noqa: F821
+    finally:
+        await worker_ctx.executor.shutdown()
 
 
 @app.on_close
