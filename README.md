@@ -151,7 +151,7 @@ No need to import anything to access these, except [`__main__`](https://docs.pyt
 - `wait()` , runs a coroutine and wait until done, it returns a result
 - `__main__`, a reference to your main route, available across your submodule imports
 - `__server__`, a dict object containing basic HTTP request information and etc.
-- `__globals__`, a worker/app-level context. to initialize objects at worker start, you can place them in `__globals__.py`
+- `__globals__`, a worker/app-level context. to initialize objects at worker start, you can place them in \_\_globals\_\_.py
 
 ## Security
 It's important to note that httpout only focuses on request security;
