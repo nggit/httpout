@@ -54,6 +54,16 @@ class TestHTTP(unittest.TestCase):
             b'6\r\nHello\n\r\n7\r\nWorld!\n\r\n3\r\nOK\n\r\n0\r\n\r\n'
         )
 
+    def test_path_info(self):
+        header, body = getcontents(host=HTTP_HOST,
+                                   port=HTTP_PORT,
+                                   method='GET',
+                                   url='//path.py//',
+                                   version='1.1')
+
+        self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
+        self.assertEqual(body, b'D\r\n//path.py //\n\r\n0\r\n\r\n')
+
     def test_syntax_error(self):
         header, body = getcontents(host=HTTP_HOST,
                                    port=HTTP_PORT,

@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.8'
+__version__ = '0.0.9'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -202,6 +202,11 @@ async def httpout_on_request(**server):
     # httpout strictly uses A-Z a-z 0-9 - _ . for directory names
     # which does not need the use of percent-encoding
     path = request.path.decode('latin-1')
+    path_info = path[(path + '.py/').find('.py/') + 3:]
+
+    if path_info:
+        path = path[:path.rfind(path_info)]
+
     module_path = os.path.abspath(
         os.path.join(document_root, os.path.normpath(path.lstrip('/')))
     )
@@ -239,6 +244,8 @@ async def httpout_on_request(**server):
         __server__.request = request
         __server__.response = response
         __server__.REQUEST_METHOD = request.method.decode('latin-1')
+        __server__.SCRIPT_NAME = path
+        __server__.PATH_INFO = path_info
         __server__.QUERY_STRING = request.query_string.decode('latin-1')
         __server__.REMOTE_ADDR = request.ip.decode('latin-1')
         __server__.HTTP_HOST = request.host.decode('latin-1')
