@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.9'
+__version__ = '0.0.10'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -206,6 +206,7 @@ async def httpout_on_request(**server):
 
     if path_info:
         path = path[:path.rfind(path_info)]
+        path_info = os.path.normpath(path_info).replace(os.sep, '/')
 
     module_path = os.path.abspath(
         os.path.join(document_root, os.path.normpath(path.lstrip('/')))
@@ -244,7 +245,7 @@ async def httpout_on_request(**server):
         __server__.request = request
         __server__.response = response
         __server__.REQUEST_METHOD = request.method.decode('latin-1')
-        __server__.SCRIPT_NAME = path
+        __server__.SCRIPT_NAME = module_path[len(document_root):].replace(os.sep, '/')  # noqa: E501
         __server__.PATH_INFO = path_info
         __server__.QUERY_STRING = request.query_string.decode('latin-1')
         __server__.REMOTE_ADDR = request.ip.decode('latin-1')
