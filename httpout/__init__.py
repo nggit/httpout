@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.10'
+__version__ = '0.0.11'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -27,6 +27,7 @@ app = Tremolo()
 async def httpout_worker_start(**worker):
     worker_ctx = worker['context']
     app = worker['app']
+    loop = worker['loop']
     logger = worker['logger']
     thread_pool_size = worker_ctx.options.get('thread_pool_size', 5)
     document_root = os.path.abspath(
@@ -35,7 +36,7 @@ async def httpout_worker_start(**worker):
     worker_ctx.options['document_root'] = document_root
 
     def run(coro):
-        return asyncio.run_coroutine_threadsafe(coro, worker['loop'])  # noqa: E501,F821
+        return asyncio.run_coroutine_threadsafe(coro, loop)
 
     def wait(coro, timeout=None):
         return run(coro).result(timeout=timeout)
@@ -193,6 +194,7 @@ async def httpout_on_close(**server):
 async def httpout_on_request(**server):
     request = server['request']
     response = server['response']
+    loop = server['loop']
     logger = server['logger']
     worker_ctx = server['worker']
     document_root = worker_ctx.options['document_root']
@@ -263,9 +265,20 @@ async def httpout_on_request(**server):
         else:
             __server__.websocket = None
 
-        def write(*args, sep=' ', end='\n', **kwargs):
-            return worker_ctx.run(
-                response.write((sep.join(map(str, args)) + end).encode())
+        def create_task(coro):
+            request.ctx.task = loop.create_task(coro)
+
+        async def write(data, waiter):
+            if waiter:
+                await waiter
+
+            await response.write(data)
+
+        def httpout_print(*args, sep=' ', end='\n', **kwargs):
+            loop.call_soon_threadsafe(
+                create_task,
+                write((sep.join(map(str, args)) + end).encode(),
+                      request.ctx.get('task'))
             )
 
         module = ModuleType('__main__')
@@ -273,7 +286,7 @@ async def httpout_on_request(**server):
         module.__main__ = module
         __server__.modules = {'__main__': module}
         module.__server__ = __server__
-        module.print = write
+        module.print = httpout_print
         module.run = worker_ctx.run
         module.wait = worker_ctx.wait
         code = worker_ctx.caches.get(module_path, None)
@@ -289,6 +302,9 @@ async def httpout_on_request(**server):
                 exec_module, module, code
             )
 
+            if 'task' in request.ctx:
+                await request.ctx.task
+
             if result:
                 worker_ctx.caches[module_path] = result
                 logger.info(
@@ -299,6 +315,9 @@ async def httpout_on_request(**server):
                 # but it can be delayed on a Keep-Alive request
                 request.ctx.module_path = module_path
         except BaseException as exc:
+            if 'task' in request.ctx and not request.ctx.task.done():
+                await request.ctx.task
+
             if not response.headers_sent():
                 response.set_status(500, b'Internal Server Error')
                 response.set_content_type(b'text/html; charset=utf-8')
