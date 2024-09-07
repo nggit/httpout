@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.12'
+__version__ = '0.0.13'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -195,6 +195,10 @@ async def async_executor(queue):
             fut, coro = await queue.get()
 
             if coro is None:
+                while queue.qsize():
+                    _, coro = queue.get_nowait()
+                    await coro
+
                 break
 
             try:
@@ -293,11 +297,18 @@ async def httpout_on_request(**server):
             return fut
 
         def httpout_print(*args, sep=' ', end='\n', **kwargs):
-            loop.call_soon_threadsafe(
-                queue.put_nowait,
-                (None,
-                 response.write((sep.join(map(str, args)) + end).encode()))
-            )
+            coro = response.write((sep.join(map(str, args)) + end).encode())
+
+            try:
+                _loop = asyncio.get_running_loop()
+
+                if _loop is loop:
+                    queue.put_nowait((None, loop.create_task(coro)))
+                    return
+            except RuntimeError:
+                pass
+
+            loop.call_soon_threadsafe(queue.put_nowait, (None, coro))
 
         module = ModuleType('__main__')
         module.__file__ = module_path
