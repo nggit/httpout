@@ -48,7 +48,12 @@ class TestHTTP(unittest.TestCase):
                                    url='/main.py',
                                    version='1.1')
 
-        self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
+        self.assertEqual(
+            header[:header.find(b'\r\n')], b'HTTP/1.1 201 Created'
+        )
+        self.assertTrue(b'\r\nFoo: baz' in header)
+        self.assertTrue(b'\r\nSet-Cookie: foo=bar; ' in header)
+        self.assertTrue(b'\r\nContent-Type: text/plain' in header)
         self.assertEqual(
             body,
             b'6\r\nHello\n\r\n7\r\nWorld!\n\r\n3\r\nOK\n\r\n0\r\n\r\n'

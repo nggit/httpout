@@ -20,6 +20,7 @@ from tremolo.lib.queue import Queue  # noqa: E402
 from tremolo.lib.websocket import WebSocket  # noqa: E402
 from tremolo.utils import html_escape  # noqa: E402
 
+from .lib.http_response import HTTPResponse
 from .utils import is_safe_path, exec_module, mime_types  # noqa: E402
 
 app = Tremolo()
@@ -267,7 +268,7 @@ async def httpout_on_request(**server):
         )
         __server__ = Context()
         __server__.request = request
-        __server__.response = response
+        __server__.response = HTTPResponse(response)
         __server__.REQUEST_METHOD = request.method.decode('latin-1')
         __server__.SCRIPT_NAME = module_path[len(document_root):].replace(os.sep, '/')  # noqa: E501
         __server__.PATH_INFO = path_info

@@ -10,7 +10,7 @@ time.sleep(0.1)
 
 
 async def main():
-    hello()
+    await hello()
     await asyncio.sleep(0.1)
 
 
