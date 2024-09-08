@@ -1,11 +1,10 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.13'
+__version__ = '0.0.15'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
 import builtins  # noqa: E402
-import concurrent.futures  # noqa: E402
 import os  # noqa: E402
 import sys  # noqa: E402
 
@@ -192,7 +191,6 @@ async def httpout_on_close(**server):
 async def httpout_on_request(**server):
     request = server['request']
     response = server['response']
-    loop = server['loop']
     logger = server['logger']
     worker_ctx = server['worker']
     document_root = worker_ctx.options['document_root']
@@ -263,37 +261,13 @@ async def httpout_on_request(**server):
         else:
             __server__.websocket = None
 
-        tasks = set()
-
-        def create_task(coro):
-            task = loop.create_task(coro)
-
-            tasks.add(task)
-            task.add_done_callback(tasks.discard)
-
-        def run(coro):
-            fut = concurrent.futures.Future()
-
-            async def callback(fut):
-                try:
-                    result = await coro
-
-                    if not fut.done():
-                        fut.set_result(result)
-                except BaseException as exc:
-                    if not fut.done():
-                        fut.set_exception(exc)
-
-            loop.call_soon_threadsafe(create_task, callback(fut))
-            return fut
-
         module = ModuleType('__main__')
         module.__file__ = module_path
         module.__main__ = module
         __server__.modules = {'__main__': module}
         module.__server__ = __server__
         module.print = __server__.response.print
-        module.run = run
+        module.run = __server__.response.run_coroutine
         module.wait = worker_ctx.wait
         code = worker_ctx.caches.get(module_path, None)
 
@@ -307,9 +281,7 @@ async def httpout_on_request(**server):
             result = await worker_ctx.executor.submit(
                 exec_module, module, code
             )
-
-            while tasks:
-                await tasks.pop()
+            await __server__.response.join()
 
             if result:
                 worker_ctx.caches[module_path] = result
@@ -321,8 +293,7 @@ async def httpout_on_request(**server):
                 # but it can be delayed on a Keep-Alive request
                 request.ctx.module_path = module_path
         except BaseException as exc:
-            while tasks:
-                await tasks.pop()
+            await __server__.response.join()
 
             if not response.headers_sent():
                 response.set_status(500, b'Internal Server Error')
