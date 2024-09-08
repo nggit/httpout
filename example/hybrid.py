@@ -8,4 +8,6 @@ async def main():
 
 
 run(main())
+print('OK')
 # leaves the thread while main() is still running
+# should print the 'OK' first

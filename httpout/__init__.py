@@ -16,7 +16,6 @@ from awaiter import MultiThreadExecutor  # noqa: E402
 from tremolo import Tremolo  # noqa: E402
 from tremolo.exceptions import NotFound, Forbidden  # noqa: E402
 from tremolo.lib.contexts import Context  # noqa: E402
-from tremolo.lib.queue import Queue  # noqa: E402
 from tremolo.lib.websocket import WebSocket  # noqa: E402
 from tremolo.utils import html_escape  # noqa: E402
 
@@ -190,30 +189,6 @@ async def httpout_on_close(**server):
         logger.info('httpout: cache deleted: %s', request_ctx.module_path)
 
 
-async def async_executor(queue):
-    while True:
-        try:
-            fut, coro = await queue.get()
-
-            if coro is None:
-                while queue.qsize():
-                    _, coro = queue.get_nowait()
-                    await coro
-
-                break
-
-            try:
-                result = await coro
-
-                if fut and not fut.done():
-                    fut.set_result(result)
-            except BaseException as exc:
-                if fut and not fut.done():
-                    fut.set_exception(exc)
-        except asyncio.CancelledError:
-            break
-
-
 async def httpout_on_request(**server):
     request = server['request']
     response = server['response']
@@ -288,35 +263,36 @@ async def httpout_on_request(**server):
         else:
             __server__.websocket = None
 
-        queue = Queue()
-        task = loop.create_task(async_executor(queue))
+        tasks = set()
+
+        def create_task(coro):
+            task = loop.create_task(coro)
+
+            tasks.add(task)
+            task.add_done_callback(tasks.discard)
 
         def run(coro):
             fut = concurrent.futures.Future()
 
-            loop.call_soon_threadsafe(queue.put_nowait, (fut, coro))
+            async def callback(fut):
+                try:
+                    result = await coro
+
+                    if not fut.done():
+                        fut.set_result(result)
+                except BaseException as exc:
+                    if not fut.done():
+                        fut.set_exception(exc)
+
+            loop.call_soon_threadsafe(create_task, callback(fut))
             return fut
-
-        def httpout_print(*args, sep=' ', end='\n', **kwargs):
-            coro = response.write((sep.join(map(str, args)) + end).encode())
-
-            try:
-                _loop = asyncio.get_running_loop()
-
-                if _loop is loop:
-                    queue.put_nowait((None, loop.create_task(coro)))
-                    return
-            except RuntimeError:
-                pass
-
-            loop.call_soon_threadsafe(queue.put_nowait, (None, coro))
 
         module = ModuleType('__main__')
         module.__file__ = module_path
         module.__main__ = module
         __server__.modules = {'__main__': module}
         module.__server__ = __server__
-        module.print = httpout_print
+        module.print = __server__.response.print
         module.run = run
         module.wait = worker_ctx.wait
         code = worker_ctx.caches.get(module_path, None)
@@ -331,8 +307,9 @@ async def httpout_on_request(**server):
             result = await worker_ctx.executor.submit(
                 exec_module, module, code
             )
-            queue.put_nowait((None, None))
-            await task
+
+            while tasks:
+                await tasks.pop()
 
             if result:
                 worker_ctx.caches[module_path] = result
@@ -344,8 +321,8 @@ async def httpout_on_request(**server):
                 # but it can be delayed on a Keep-Alive request
                 request.ctx.module_path = module_path
         except BaseException as exc:
-            queue.put_nowait((None, None))
-            await task
+            while tasks:
+                await tasks.pop()
 
             if not response.headers_sent():
                 response.set_status(500, b'Internal Server Error')

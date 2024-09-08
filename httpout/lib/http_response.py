@@ -59,3 +59,17 @@ class HTTPResponse:
 
     def set_content_type(self, content_type='text/html; charset=utf-8'):
         self.call_soon(self.response.set_content_type, content_type)
+
+    def print(self, *args, sep=' ', end='\n', **kwargs):
+        coro = self.response.write((sep.join(map(str, args)) + end).encode())
+
+        try:
+            loop = asyncio.get_running_loop()
+
+            if loop is self.loop:
+                self.loop.create_task(coro)
+                return
+        except RuntimeError:
+            pass
+
+        self.loop.call_soon_threadsafe(self.loop.create_task, coro)
