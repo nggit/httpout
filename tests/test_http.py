@@ -83,11 +83,11 @@ class TestHTTP(unittest.TestCase):
         header, body = getcontents(host=HTTP_HOST,
                                    port=HTTP_PORT,
                                    method='GET',
-                                   url='//path.py///',
+                                   url='//path.py/path//info///',
                                    version='1.1')
 
         self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
-        self.assertEqual(body, b'B\r\n/path.py /\n\r\n0\r\n\r\n')
+        self.assertEqual(body, b'14\r\n/path.py /path/info\n\r\n0\r\n\r\n')
 
     def test_syntax_error(self):
         header, body = getcontents(host=HTTP_HOST,
