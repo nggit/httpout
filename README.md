@@ -1,15 +1,13 @@
 # httpout
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nggit_httpout&metric=coverage)](https://sonarcloud.io/summary/new_code?id=nggit_httpout)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nggit_httpout&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nggit_httpout)
+
 httpout allows you to execute your Python script from a web URL, the `print()` output goes to your browser.
 
 This is the classic way to deploy your scripts to the web.
 You just need to put your regular `.py` files as well as other static files in the document root and each will be routable from the web. No server reload is required!
 
-It's similar to [CGI](https://en.wikipedia.org/wiki/Common_Gateway_Interface), except that httpout doesn't spawn a new process for each request,
-making it more lightweight in terms of resource usage.
-The disadvantage is that it's not isolated; your script is executed dynamically by the server using [exec()](https://docs.python.org/3/library/functions.html#exec) within the same process.
-
-It provides a native experience for running your script from the web,
-and the remaining drawbacks can be mitigated in this era using containerization. The tip is: **don't run Python as root**.
+It provides a native experience for running your script from the web.
 
 ## How does it work?
 httpout will assign every route either like `/hello.py` or `/index.py` with the name `__main__` and executes it as a module in a thread pool.
@@ -105,7 +103,7 @@ async def main():
     print(method_str, method_bytes, form_data)
 
 
-wait(main())
+run(main())
 ```
 
 Then you can do:
@@ -115,34 +113,11 @@ curl -d foo=bar http://localhost:8000/form.py
 
 ## Features
 httpout is designed to be fun. It's not built for perfectionists. httpout has:
-- A [hybrid async and sync](#hybrid-async-and-sync), the two worlds can coexist in your script seamlessly; It's not yet time to drop your favorite synchronous library
+- A [hybrid async and sync](https://httpout.github.io/hybrid.html), the two worlds can coexist in your script seamlessly; It's not yet time to drop your favorite synchronous library
 - More lightweight than running CGI scripts
 - Your `print()`s are sent immediately line by line without waiting for the script to finish like a typical CGI
 - No need for a templating engine, just do `if-else` and `print()` making your script portable for both CLI and web
 - And more
-
-## Hybrid async and sync
-httpout server runs each module in a separate thread asynchronously. You can run blocking codes like `time.sleep()` without bothering server's loop.
-You can also run coroutine functions at once with `wait()`. Although regular `asyncio.run()` will do. The difference is that the former uses an existing event loop rather than creating a new one every time.
-
-```python
-# ...
-time.sleep(1)
-
-async def main():
-   await asyncio.sleep(1)
-
-wait(main())
-print('Done!')
-```
-
-For your information, `wait()` is a shorthand of:
-```python
-fut = run(main())
-fut.result()
-```
-
-where `fut` is a [concurrent.futures.Future](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future) object.
 
 ## Builtin objects
 No need to import anything to access these, except [`__main__`](https://docs.python.org/3/library/__main__.html) which can be imported to honor the semantics.
