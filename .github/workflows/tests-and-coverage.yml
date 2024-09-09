@@ -58,6 +58,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           path: artifact
+          include-hidden-files: true
         if: ${{ matrix.python-version == '3.12' }}
   report:
     name: Upload Coverage to Codecov & SonarCloud Scan
