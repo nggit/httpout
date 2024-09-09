@@ -179,7 +179,6 @@ async def httpout_worker_stop(**worker):
 
             if hasattr(coro, '__await__'):
                 await coro
-
     finally:
         await worker_ctx.executor.shutdown()
 
