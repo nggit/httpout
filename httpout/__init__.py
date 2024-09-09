@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.16'
+__version__ = '0.0.17'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -131,7 +131,8 @@ async def httpout_worker_start(**worker):
                     globals['__name__']
                 ]
 
-                # from httpout import request, response
+                # handles virtual imports,
+                # e.g. from httpout import request, response
                 for child in fromlist:
                     module.__dict__[child] = module.__server__[child]
 
