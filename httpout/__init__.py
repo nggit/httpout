@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.15'
+__version__ = '0.0.16'
 __all__ = ('app',)
 
 import asyncio  # noqa: E402
@@ -160,7 +160,10 @@ async def httpout_worker_start(**worker):
         exec_module(__globals__)  # noqa: F821
 
         if '__enter__' in __globals__.__dict__:  # noqa: F821
-            __globals__.__enter__(app)  # noqa: F821
+            coro = __globals__.__enter__(app)  # noqa: F821
+
+            if hasattr(coro, '__await__'):
+                await coro
 
     app.add_middleware(httpout_on_request, 'request')
 
@@ -172,7 +175,11 @@ async def httpout_worker_stop(**worker):
 
     try:
         if '__exit__' in __globals__.__dict__:  # noqa: F821
-            __globals__.__exit__(app)  # noqa: F821
+            coro = __globals__.__exit__(app)  # noqa: F821
+
+            if hasattr(coro, '__await__'):
+                await coro
+
     finally:
         await worker_ctx.executor.shutdown()
 

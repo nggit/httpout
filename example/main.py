@@ -4,6 +4,7 @@ import time
 
 from foo import hello
 
+__globals__.counter += 1
 MESSAGE = 'Done!'
 
 time.sleep(0.1)

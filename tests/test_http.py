@@ -39,6 +39,11 @@ class TestHTTP(unittest.TestCase):
 
         self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
         self.assertTrue(b'\r\nContent-Length: 0' in header)
+
+        # these are set by the middleware
+        self.assertTrue(b'\r\nX-Powered-By: foo' in header)
+        self.assertTrue(b'\r\nX-Hacker: bar' in header)
+
         self.assertEqual(body, b'')
 
     def test_imports(self):
@@ -54,6 +59,11 @@ class TestHTTP(unittest.TestCase):
         self.assertTrue(b'\r\nFoo: baz' in header)
         self.assertTrue(b'\r\nSet-Cookie: foo=bar; ' in header)
         self.assertTrue(b'\r\nContent-Type: text/plain' in header)
+
+        # these are set by the middleware
+        self.assertTrue(b'\r\nX-Powered-By: fo' in header)
+        self.assertFalse(b'\r\nX-Hacker: bar' in header)
+
         self.assertEqual(
             body,
             b'6\r\nHello\n\r\n7\r\nWorld!\n\r\n3\r\nOK\n\r\n0\r\n\r\n'
