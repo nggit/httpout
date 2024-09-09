@@ -1,15 +1,15 @@
 # httpout
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nggit_httpout&metric=coverage)](https://sonarcloud.io/summary/new_code?id=nggit_httpout)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nggit_httpout&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nggit_httpout)
+
 httpout allows you to execute your Python script from a web URL, the `print()` output goes to your browser.
 
 This is the classic way to deploy your scripts to the web.
 You just need to put your regular `.py` files as well as other static files in the document root and each will be routable from the web. No server reload is required!
+It provides a native experience for running your script from the web.
 
 It's similar to [CGI](https://en.wikipedia.org/wiki/Common_Gateway_Interface), except that httpout doesn't spawn a new process for each request,
 making it more lightweight in terms of resource usage.
-The disadvantage is that it's not isolated; your script is executed dynamically by the server using [exec()](https://docs.python.org/3/library/functions.html#exec) within the same process.
-
-It provides a native experience for running your script from the web,
-and the remaining drawbacks can be mitigated in this era using containerization. The tip is: **don't run Python as root**.
 
 ## How does it work?
 httpout will assign every route either like `/hello.py` or `/index.py` with the name `__main__` and executes it as a module in a thread pool.
