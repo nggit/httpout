@@ -35,7 +35,7 @@ jobs:
       - name: Lint
         run: |
           python -m pip install --upgrade bandit
-          python -m bandit --recursive httpout
+          python -m bandit --recursive httpout/
           python -m pip install --upgrade flake8
           python -m flake8 httpout/
         if: ${{ matrix.os == 'ubuntu-20.04' && matrix.python-version == '3.12' }}
@@ -45,11 +45,13 @@ jobs:
       - name: Run tests with coverage
         run: |
           python -m coverage run -m tests
+          python -m coverage combine
           mkdir artifact && mv .coverage artifact/.coverage.${{ matrix.os }}
         if: ${{ matrix.python-version == '3.12' && !startsWith(matrix.os, 'windows-') }}
       - name: Run tests with coverage on Windows
         run: |
           python -m coverage run -m tests
+          python -m coverage combine
           mkdir artifact && move .coverage artifact\.coverage.windows
         shell: cmd
         if: ${{ matrix.python-version == '3.12' && startsWith(matrix.os, 'windows-') }}
