@@ -5,10 +5,7 @@ import sys
 import unittest
 
 # makes imports relative from the repo directory
-sys.path.insert(
-    0,
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from tests.__main__ import main, HTTP_HOST, HTTP_PORT  # noqa: E402
 from tests.utils import getcontents  # noqa: E402
@@ -42,7 +39,7 @@ class TestHTTP(unittest.TestCase):
 
         # these are set by the middleware
         self.assertTrue(b'\r\nX-Powered-By: foo' in header)
-        self.assertTrue(b'\r\nX-Hacker: bar' in header)
+        self.assertTrue(b'\r\nX-Debug: bar' in header)
 
         self.assertEqual(body, b'')
 
@@ -61,8 +58,8 @@ class TestHTTP(unittest.TestCase):
         self.assertTrue(b'\r\nContent-Type: text/plain' in header)
 
         # these are set by the middleware
-        self.assertTrue(b'\r\nX-Powered-By: fo' in header)
-        self.assertFalse(b'\r\nX-Hacker: bar' in header)
+        self.assertTrue(b'\r\nX-Powered-By: foo' in header)
+        self.assertFalse(b'\r\nX-Debug: bar' in header)
 
         self.assertEqual(
             body,

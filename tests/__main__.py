@@ -11,7 +11,12 @@ PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # makes imports relative from the repo directory
 sys.path.insert(0, PROJECT_DIR)
 
-from httpout import app  # noqa: E402
+from tremolo import Tremolo  # noqa: E402
+from httpout import HTTPOut  # noqa: E402
+
+app = Tremolo()
+
+HTTPOut(app)
 
 HTTP_HOST = '127.0.0.1'
 HTTP_PORT = 28008
@@ -31,9 +36,7 @@ def main():
     p.start()
 
     try:
-        suite = unittest.TestLoader().discover(
-            os.path.dirname(os.path.abspath(__file__))
-        )
+        suite = unittest.TestLoader().discover('tests')
         unittest.TextTestRunner().run(suite)
     finally:
         if p.is_alive():
