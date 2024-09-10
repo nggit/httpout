@@ -7,10 +7,7 @@ import unittest
 from io import StringIO
 
 # makes imports relative from the repo directory
-sys.path.insert(
-    0,
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from httpout.__main__ import usage, bind, threads  # noqa: E402
 from tremolo.utils import parse_args  # noqa: E402

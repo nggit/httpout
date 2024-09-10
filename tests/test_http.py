@@ -5,10 +5,7 @@ import sys
 import unittest
 
 # makes imports relative from the repo directory
-sys.path.insert(
-    0,
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from tests.__main__ import main, HTTP_HOST, HTTP_PORT  # noqa: E402
 from tests.utils import getcontents  # noqa: E402
