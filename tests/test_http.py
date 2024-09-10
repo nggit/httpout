@@ -39,7 +39,7 @@ class TestHTTP(unittest.TestCase):
 
         # these are set by the middleware
         self.assertTrue(b'\r\nX-Powered-By: foo' in header)
-        self.assertTrue(b'\r\nX-Hacker: bar' in header)
+        self.assertTrue(b'\r\nX-Debug: bar' in header)
 
         self.assertEqual(body, b'')
 
@@ -58,8 +58,8 @@ class TestHTTP(unittest.TestCase):
         self.assertTrue(b'\r\nContent-Type: text/plain' in header)
 
         # these are set by the middleware
-        self.assertTrue(b'\r\nX-Powered-By: fo' in header)
-        self.assertFalse(b'\r\nX-Hacker: bar' in header)
+        self.assertTrue(b'\r\nX-Powered-By: foo' in header)
+        self.assertFalse(b'\r\nX-Debug: bar' in header)
 
         self.assertEqual(
             body,

@@ -16,12 +16,12 @@ class _MyMiddleware:
         response = server['response']
 
         response.set_header('X-Powered-By', 'foo')
-        response.set_header('X-Hacker', 'bar')
+        response.set_header('X-Debug', 'bar')
 
     async def _on_response(self, **server):
         response = server['response']
 
-        del response.headers[b'x-hacker']
+        del response.headers[b'x-debug']
 
 
 # you have access to the httpout's app object when
