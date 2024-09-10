@@ -2,9 +2,13 @@
 
 import sys
 
+from tremolo import Tremolo
 from tremolo.utils import parse_args
+from httpout import HTTPOut
 
-from httpout import app
+app = Tremolo()
+
+HTTPOut(app)
 
 
 def usage(**context):
