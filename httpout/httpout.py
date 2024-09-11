@@ -9,7 +9,7 @@ from traceback import TracebackException  # noqa: E402
 from types import ModuleType  # noqa: E402
 
 from awaiter import MultiThreadExecutor  # noqa: E402
-from tremolo.exceptions import NotFound, Forbidden  # noqa: E402
+from tremolo.exceptions import BadRequest, NotFound, Forbidden  # noqa: E402
 from tremolo.lib.contexts import Context  # noqa: E402
 from tremolo.lib.websocket import WebSocket  # noqa: E402
 from tremolo.utils import html_escape  # noqa: E402
@@ -188,6 +188,9 @@ class HTTPOut:
         logger = server['logger']
         worker_ctx = server['worker']
         document_root = worker_ctx.options['document_root']
+
+        if not request.is_valid:
+            raise BadRequest
 
         # no need to unquote path
         # in fact, the '%' character in the path will be rejected.
