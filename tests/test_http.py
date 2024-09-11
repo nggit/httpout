@@ -144,6 +144,17 @@ class TestHTTP(unittest.TestCase):
         self.assertTrue(b'\r\nContent-Type: image/gif' in header)
         self.assertEqual(body[:6], b'GIF89a')
 
+    def test_badrequest(self):
+        header, body = getcontents(
+            host=HTTP_HOST,
+            port=HTTP_PORT,
+            raw=b'GET HTTP/\r\nHost: localhost:%d\r\n\r\n' % HTTP_PORT
+        )
+
+        self.assertEqual(
+            header[:header.find(b'\r\n')], b'HTTP/1.1 400 Bad Request'
+        )
+
     def test_sec_path_traversal(self):
         header, body = getcontents(host=HTTP_HOST,
                                    port=HTTP_PORT,
