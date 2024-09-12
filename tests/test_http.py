@@ -155,6 +155,18 @@ class TestHTTP(unittest.TestCase):
             header[:header.find(b'\r\n')], b'HTTP/1.1 400 Bad Request'
         )
 
+    def test_private_file(self):
+        header, body = getcontents(host=HTTP_HOST,
+                                   port=HTTP_PORT,
+                                   method='GET',
+                                   url='/__globals__.py',
+                                   version='1.1')
+
+        self.assertEqual(
+            header[:header.find(b'\r\n')],
+            b'HTTP/1.1 404 Not Found'
+        )
+
     def test_sec_path_traversal(self):
         header, body = getcontents(host=HTTP_HOST,
                                    port=HTTP_PORT,

@@ -227,7 +227,7 @@ class HTTPOut:
 
         request_uri = request.url.decode('latin-1')
 
-        if not os.path.isfile(module_path):
+        if basename.startswith('_') or not os.path.isfile(module_path):
             raise NotFound('URL not found:', html_escape(request_uri))
 
         if ext == '.py':
