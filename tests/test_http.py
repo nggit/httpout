@@ -143,7 +143,7 @@ class TestHTTP(unittest.TestCase):
 
         self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
         self.assertTrue(b'\r\nContent-Type: text/html' in header)
-        self.assertEqual(body, b'<p>Hello, World!</p>\n')
+        self.assertEqual(body, b'<p>Hello, World!</p>')
 
     def test_static_file(self):
         header, body = getcontents(host=HTTP_HOST,
