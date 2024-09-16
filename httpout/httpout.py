@@ -218,14 +218,17 @@ class HTTPOut:
 
         dirname, basename = os.path.split(module_path)
         ext = os.path.splitext(basename)[-1]
+        request_uri = request.url.decode('latin-1')
 
         if ext == '':
             dirname = module_path
-            basename = 'index.py'
-            module_path = os.path.join(dirname, basename)
-            ext = '.py'
 
-        request_uri = request.url.decode('latin-1')
+            for basename in ('index.py', 'index.html'):
+                module_path = os.path.join(dirname, basename)
+                ext = os.path.splitext(basename)[-1]
+
+                if os.path.exists(module_path):
+                    break
 
         if basename.startswith('_') or not os.path.isfile(module_path):
             raise NotFound('URL not found:', html_escape(request_uri))

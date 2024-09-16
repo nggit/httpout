@@ -24,7 +24,7 @@ So if you just change the script there is no need to reload the server process, 
 Keep in mind this may not work for running complex python scripts,
 e.g. running other server processes or multithreaded applications as each route is not a real main thread.
 
-![httpout](https://raw.githubusercontent.com/nggit/httpout/main/example/static/hello.gif)
+![httpout](https://raw.githubusercontent.com/nggit/httpout/main/examples/static/hello.gif)
 
 ## Install
 ```
@@ -46,9 +46,9 @@ time.sleep(2)
 print('Bye!</pre>')
 ```
 
-Put `hello.py` in the `example/` folder, then run the httpout server with:
+Put `hello.py` in the `examples/` folder, then run the httpout server with:
 ```
-python3 -m httpout --port 8000 example/
+python3 -m httpout --port 8000 examples/
 ```
 
 and your `hello.py` can be accessed at [http://localhost:8000/hello.py](http://localhost:8000/hello.py).

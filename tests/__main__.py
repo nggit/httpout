@@ -20,7 +20,7 @@ HTTPOut(app)
 
 HTTP_HOST = '127.0.0.1'
 HTTP_PORT = 28008
-DOCUMENT_ROOT = os.path.join(PROJECT_DIR, 'example')
+DOCUMENT_ROOT = os.path.join(PROJECT_DIR, 'examples')
 
 
 def main():
