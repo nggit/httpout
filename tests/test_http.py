@@ -15,7 +15,7 @@ class TestHTTP(unittest.TestCase):
     def setUp(self):
         print('[', self.id(), ']')
 
-    def test_root_notfound(self):
+    def test_index_notfound(self):
         header, body = getcontents(host=HTTP_HOST,
                                    port=HTTP_PORT,
                                    method='GET',
@@ -26,6 +26,7 @@ class TestHTTP(unittest.TestCase):
             header[:header.find(b'\r\n')],
             b'HTTP/1.1 404 Not Found'
         )
+        self.assertEqual(body, b'URL not found: /')
 
     def test_index_empty(self):
         header, body = getcontents(host=HTTP_HOST,
@@ -132,6 +133,17 @@ class TestHTTP(unittest.TestCase):
 
         self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
         self.assertEqual(body, b'7\r\nHello, \r\n7\r\nWorld!\n\r\n0\r\n\r\n')
+
+    def test_static_index(self):
+        header, body = getcontents(host=HTTP_HOST,
+                                   port=HTTP_PORT,
+                                   method='GET',
+                                   url='/static/',
+                                   version='1.1')
+
+        self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
+        self.assertTrue(b'\r\nContent-Type: text/html' in header)
+        self.assertEqual(body, b'<p>Hello, World!</p>\n')
 
     def test_static_file(self):
         header, body = getcontents(host=HTTP_HOST,
