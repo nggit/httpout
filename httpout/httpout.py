@@ -134,7 +134,15 @@ class HTTPOut:
                     # handles virtual imports,
                     # e.g. from httpout import request, response
                     for child in fromlist:
-                        module.__dict__[child] = module.__server__[child]
+                        if child not in module.__dict__:
+                            if child in module.__server__:
+                                module.__dict__[child] = module.__server__[
+                                    child
+                                ]
+                            else:
+                                module.__dict__[child] = module.__builtins__[
+                                    child
+                                ]
 
                     return module
 

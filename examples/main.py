@@ -2,6 +2,9 @@
 import asyncio
 import time
 
+# `__globals__` and `wait` are built-in.
+# but can be optionally imported to satisfy linters
+from httpout import __globals__, wait
 from foo import hello
 
 MESSAGE = 'Done!'
