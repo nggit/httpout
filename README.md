@@ -64,7 +64,7 @@ import sys
 from httpout import request, response
 
 
-method_str = __server__.REQUEST_METHOD
+method_str = request.environ['REQUEST_METHOD']
 method_bytes = request.method
 
 
@@ -87,7 +87,7 @@ import sys
 from httpout import request, response
 
 
-method_str = __server__.REQUEST_METHOD
+method_str = request.environ['REQUEST_METHOD']
 method_bytes = request.method
 
 
