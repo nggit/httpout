@@ -77,6 +77,16 @@ class TestHTTP(unittest.TestCase):
         self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
         self.assertEqual(body, b'3\r\nOK\n\r\n6\r\nDone!\n\r\n0\r\n\r\n')
 
+    def test_request_environ(self):
+        header, body = getcontents(host=HTTP_HOST,
+                                   port=HTTP_PORT,
+                                   method='GET',
+                                   url='/environ.py',
+                                   version='1.1')
+
+        self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
+        self.assertEqual(body, b'13\r\nb\'GET\' /environ.py\n\r\n0\r\n\r\n')
+
     def test_path_info(self):
         header, body = getcontents(host=HTTP_HOST,
                                    port=HTTP_PORT,

@@ -1,21 +1,22 @@
 # Copyright (c) 2024 nggit
 
-import asyncio  # noqa: E402
-import builtins  # noqa: E402
-import os  # noqa: E402
-import sys  # noqa: E402
+import asyncio
+import builtins
+import os
+import sys
 
-from traceback import TracebackException  # noqa: E402
-from types import ModuleType  # noqa: E402
+from traceback import TracebackException
+from types import ModuleType
 
-from awaiter import MultiThreadExecutor  # noqa: E402
-from tremolo.exceptions import BadRequest, NotFound, Forbidden  # noqa: E402
-from tremolo.lib.contexts import Context  # noqa: E402
-from tremolo.lib.websocket import WebSocket  # noqa: E402
-from tremolo.utils import html_escape  # noqa: E402
+from awaiter import MultiThreadExecutor
+from tremolo.exceptions import BadRequest, NotFound, Forbidden
+from tremolo.lib.contexts import Context
+from tremolo.lib.websocket import WebSocket
+from tremolo.utils import html_escape
 
+from .lib.http_request import HTTPRequest
 from .lib.http_response import HTTPResponse
-from .utils import is_safe_path, exec_module, mime_types  # noqa: E402
+from .utils import is_safe_path, exec_module, mime_types
 
 
 class HTTPOut:
@@ -133,7 +134,15 @@ class HTTPOut:
                     # handles virtual imports,
                     # e.g. from httpout import request, response
                     for child in fromlist:
-                        module.__dict__[child] = module.__server__[child]
+                        if child not in module.__dict__:
+                            if child in module.__server__:
+                                module.__dict__[child] = module.__server__[
+                                    child
+                                ]
+                            else:
+                                module.__dict__[child] = module.__builtins__[
+                                    child
+                                ]
 
                     return module
 
@@ -240,7 +249,7 @@ class HTTPOut:
                 request.socket.fileno(), path, module_path
             )
             __server__ = Context()
-            __server__.request = request
+            __server__.request = HTTPRequest(request, __server__.__dict__)
             __server__.response = HTTPResponse(response)
             __server__.REQUEST_METHOD = request.method.decode('latin-1')
             __server__.SCRIPT_NAME = module_path[len(document_root):].replace(
