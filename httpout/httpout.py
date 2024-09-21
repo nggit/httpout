@@ -126,15 +126,18 @@ class HTTPOut:
 
                     return module
 
-                if name == 'httpout':
+                if name == 'httpout' or name.startswith('httpout.'):
                     module = globals['__main__'].__server__.modules[
                         globals['__name__']
                     ]
 
                     # handles virtual imports,
                     # e.g. from httpout import request, response
-                    for child in fromlist:
-                        if child not in module.__dict__:
+                    if fromlist:
+                        for child in fromlist:
+                            if child in module.__dict__:
+                                continue
+
                             if child in module.__server__:
                                 module.__dict__[child] = module.__server__[
                                     child
