@@ -347,8 +347,11 @@ class HTTPOut:
             'httpout: %d: %s -> %s: %s',
             request.socket.fileno(), path, mime_types[ext], module_path
         )
-        await response.sendfile(module_path, content_type=mime_types[ext])
-
+        await response.sendfile(
+            module_path,
+            content_type=mime_types[ext],
+            executor=worker_ctx.executor
+        )
         # exit middleware without closing the connection
         return True
 
