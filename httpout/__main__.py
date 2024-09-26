@@ -37,8 +37,8 @@ def usage(**context):
     print('                            Intended for development')
     print('  --log-level               Defaults to "DEBUG". See')
     print('                            https://docs.python.org/3/library/logging.html#levels')  # noqa: E501
-    print('  --event-loop-policy       A fully qualified event loop policy name')  # noqa: E501
-    print('                            E.g. "asyncio.DefaultEventLoopPolicy" or "uvloop.EventLoopPolicy"')  # noqa: E501
+    print('  --loop                    A fully qualified event loop name')
+    print('                            E.g. "asyncio" or "asyncio.SelectorEventLoop"')  # noqa: E501
     print('                            It expects the respective module to already be present')  # noqa: E501
     print('  --help                    Show this help and exit')
     print()
