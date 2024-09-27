@@ -1,14 +1,16 @@
 # Copyright (c) 2024 nggit
 
-__all__ = ('is_safe_path', 'exec_module', 'mime_types')
+__all__ = (
+    'WORD_CHARS', 'PATH_CHARS', 'is_safe_path', 'exec_module', 'mime_types'
+)
 
-import re  # noqa: E402
-
-pattern = re.compile(r'^[\w\-\/\.]{1,255}$')
+# \w
+WORD_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
+PATH_CHARS = WORD_CHARS + '-/.'
 
 
 def is_safe_path(path):
-    if not pattern.match(path) or '..' in path:
+    if len(path) > 255 or path.strip(PATH_CHARS) != '' or '..' in path:
         return False
 
     return True
