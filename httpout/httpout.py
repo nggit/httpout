@@ -64,7 +64,7 @@ class HTTPOut:
                     raise ImportError(f'module name conflict: {name}')
 
                 logger.info(
-                    'httpout: %d: %s: importing %s',
+                    '%d: %s: importing %s',
                     globals['__main__'].__server__.request.socket.fileno(),
                     globals['__name__'],
                     name
@@ -100,7 +100,7 @@ class HTTPOut:
                 # satisfy import __main__
                 if name == '__main__':
                     logger.info(
-                        'httpout: %d: %s: importing __main__',
+                        '%d: %s: importing __main__',
                         globals['__main__'].__server__.request.socket.fileno(),
                         globals['__name__']
                     )
@@ -248,7 +248,7 @@ class HTTPOut:
         if ext == '.py':
             # begin loading the module
             logger.info(
-                'httpout: %d: %s -> __main__: %s',
+                '%d: %s -> __main__: %s',
                 request.socket.fileno(), path, module_path
             )
             __server__ = Context()
@@ -287,8 +287,7 @@ class HTTPOut:
 
             if code:
                 logger.info(
-                    'httpout: %d: %s: using cache',
-                    request.socket.fileno(), path
+                    '%d: %s: using cache', request.socket.fileno(), path
                 )
 
             try:
@@ -301,8 +300,7 @@ class HTTPOut:
                 if result:
                     worker_ctx.caches[module_path] = result
                     logger.info(
-                        'httpout: %d: %s: cached',
-                        request.socket.fileno(), path
+                        '%d: %s: cached', request.socket.fileno(), path
                     )
                 else:
                     # cache is going to be deleted on @app.on_close
@@ -344,7 +342,7 @@ class HTTPOut:
             raise Forbidden(f'Disallowed file extension: {ext}')
 
         logger.info(
-            'httpout: %d: %s -> %s: %s',
+            '%d: %s -> %s: %s',
             request.socket.fileno(), path, mime_types[ext], module_path
         )
         await response.sendfile(
@@ -362,4 +360,4 @@ class HTTPOut:
 
         if 'module_path' in request_ctx:
             worker_ctx.caches[request_ctx.module_path] = None
-            logger.info('httpout: cache deleted: %s', request_ctx.module_path)
+            logger.info('cache deleted: %s', request_ctx.module_path)
