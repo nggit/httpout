@@ -1,5 +1,6 @@
 # Copyright (c) 2024 nggit
 
+import multiprocessing as mp
 import sys
 
 from tremolo import Tremolo
@@ -81,4 +82,5 @@ if __name__ == '__main__':
         print('You must specify DOCUMENT_ROOT. Use "--help" for help')
         sys.exit(1)
 
+    mp.set_start_method('spawn')
     app.run(server_name=b'httpout', **options)
