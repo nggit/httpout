@@ -1,7 +1,8 @@
 # Copyright (c) 2024 nggit
 
 __all__ = (
-    'WORD_CHARS', 'PATH_CHARS', 'is_safe_path', 'exec_module', 'mime_types'
+    'WORD_CHARS', 'PATH_CHARS', 'is_safe_path',
+    'exec_module', 'cleanup_modules', 'mime_types'
 )
 
 # \w
@@ -25,6 +26,15 @@ def exec_module(module, code=None):
         return code
 
     exec(code, module.__dict__)  # nosec B102
+
+
+def cleanup_modules(modules):
+    for module in modules.values():
+        for name in module.__dict__:
+            if name.startswith('__') or name in ('print', 'run', 'wait'):
+                continue
+
+            module.__dict__[name] = None
 
 
 # https://developer.mozilla.org
