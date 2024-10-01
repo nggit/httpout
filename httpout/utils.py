@@ -5,6 +5,8 @@ __all__ = (
     'exec_module', 'cleanup_modules', 'mime_types'
 )
 
+from types import ModuleType  # noqa: E402
+
 # \w
 WORD_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
 PATH_CHARS = WORD_CHARS + '-/.'
@@ -28,13 +30,21 @@ def exec_module(module, code=None):
     exec(code, module.__dict__)  # nosec B102
 
 
-def cleanup_modules(modules):
-    for module in modules.values():
-        for name in module.__dict__:
-            if name.startswith('__') or name in ('print', 'run', 'wait'):
-                continue
+def cleanup_modules(modules, excludes=()):
+    for module_name, module in modules.items():
+        if hasattr(module, '__dict__'):
+            for name, value in module.__dict__.items():
+                if value in excludes or name.startswith('__'):
+                    continue
 
-            module.__dict__[name] = None
+                if (hasattr(value, '__dict__') and
+                        not isinstance(value, (type, ModuleType))):
+                    cleanup_modules(value.__dict__, excludes)
+
+                module.__dict__[name] = None
+
+        if not module_name.startswith('__'):
+            modules[module_name] = None
 
 
 # https://developer.mozilla.org

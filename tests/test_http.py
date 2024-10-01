@@ -64,7 +64,8 @@ class TestHTTP(unittest.TestCase):
 
         self.assertEqual(
             body,
-            b'6\r\nHello\n\r\n7\r\nWorld!\n\r\n3\r\nOK\n\r\n0\r\n\r\n'
+            b'6\r\nHello\n\r\n7\r\nWorld!\n\r\n3\r\nOK\n\r\n'
+            b'5\r\nNone\n\r\n0\r\n\r\n'
         )
 
     def test_hybrid(self):
