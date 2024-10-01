@@ -336,9 +336,13 @@ class HTTPOut:
                     request.protocol.print_exception(exc)
             finally:
                 await worker_ctx.executor.submit(
-                    cleanup_modules, __server__.modules
+                    cleanup_modules,
+                    __server__.modules,
+                    (module.print, module.run, module.wait,
+                     __server__.response)
                 )
                 await __server__.response.join()
+                __server__.modules.clear()
             # EOF
             return b''
 
