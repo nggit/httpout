@@ -8,7 +8,8 @@ authors = [
     { name = 'nggit', email = 'contact@anggit.com' },
 ]
 description = """\
-    httpout allows you to execute your Python script from a web URL, \
+    httpout is a runtime environment for Python files. \
+    It allows you to execute your Python scripts from a web URL, \
     the print() output goes to your browser.\
     """
 requires-python = '>=3.7'

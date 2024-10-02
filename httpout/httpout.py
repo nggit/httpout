@@ -158,7 +158,6 @@ class HTTPOut:
         worker_ctx.executor = MultiThreadExecutor(thread_pool_size)
 
         worker_ctx.executor.start()
-
         logger.info('entering directory: %s', document_root)
         os.chdir(document_root)
         sys.path.insert(0, document_root)

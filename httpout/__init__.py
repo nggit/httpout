@@ -1,6 +1,6 @@
 # Copyright (c) 2024 nggit
 
-__version__ = '0.0.32'
+__version__ = '0.0.33'
 __all__ = ('HTTPOut',)
 
 from .httpout import HTTPOut  # noqa: E402
