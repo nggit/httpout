@@ -5,7 +5,10 @@ __all__ = (
     'exec_module', 'cleanup_modules', 'mime_types'
 )
 
-from types import ModuleType  # noqa: E402
+try:
+    from .modules import cleanup_modules
+except ImportError:
+    from ._modules import cleanup_modules
 
 # \w
 WORD_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
@@ -19,32 +22,23 @@ def is_safe_path(path):
     return True
 
 
-def exec_module(module, code=None):
+def exec_module(module, code=None, cleanup=False):
     if code is None:
         with open(module.__file__, 'r') as f:
             code = compile(f.read(), '<string>', 'exec')
             exec(code, module.__dict__)  # nosec B102
+    else:
+        exec(code, module.__dict__)  # nosec B102
+        code = None
 
-        return code
+    if cleanup:
+        module.wait(module.__server__.response.join())
+        cleanup_modules(
+            module.__server__.modules,
+            (module.print, module.run, module.wait, module.__server__.response)
+        )
 
-    exec(code, module.__dict__)  # nosec B102
-
-
-def cleanup_modules(modules, excludes=()):
-    for module_name, module in modules.items():
-        if hasattr(module, '__dict__'):
-            for name, value in module.__dict__.items():
-                if value in excludes or name.startswith('__'):
-                    continue
-
-                if (hasattr(value, '__dict__') and
-                        not isinstance(value, (type, ModuleType))):
-                    cleanup_modules(value.__dict__, excludes)
-
-                module.__dict__[name] = None
-
-        if not module_name.startswith('__'):
-            modules[module_name] = None
+    return code
 
 
 # https://developer.mozilla.org
