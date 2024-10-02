@@ -7,7 +7,7 @@ import time
 from httpout import __globals__, wait
 from foo import hello
 
-MESSAGE = 'Done!'
+MESSAGES = ['Done!']
 
 time.sleep(0.1)
 
@@ -21,4 +21,6 @@ async def main():
 
 if __name__ == '__main__':
     wait(main())
-    print(MESSAGE)
+
+    for message in MESSAGES:
+        print(message)

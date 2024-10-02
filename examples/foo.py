@@ -1,4 +1,7 @@
 
+import sys
+import __main__
+
 from httpout import response
 from bar import world
 
@@ -8,7 +11,8 @@ response.set_header('Foo', 'baz')
 
 class Foo:
     def __del__(self):
-        print(hello)
+        if sys is None or sys.implementation.name == 'cpython':
+            print(hello)
 
     async def hello(self):
         response.set_cookie('foo', 'bar')
@@ -16,6 +20,9 @@ class Foo:
         response.set_content_type('text/plain')
         await response.write(b'Hello\n')
         world()
+
+        if sys.implementation.name != 'cpython':
+            __main__.MESSAGES.append(None)
 
 
 hello = Foo().hello

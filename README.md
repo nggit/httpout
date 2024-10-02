@@ -2,7 +2,7 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nggit_httpout&metric=coverage)](https://sonarcloud.io/summary/new_code?id=nggit_httpout)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nggit_httpout&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nggit_httpout)
 
-httpout allows you to execute your Python script from a web URL, the `print()` output goes to your browser.
+httpout is a runtime environment for Python files. It allows you to execute your Python scripts from a web URL, the `print()` output goes to your browser.
 
 This is the classic way to deploy your scripts to the web.
 You just need to put your regular `.py` files as well as other static files in the document root and each will be routable from the web. No server reload is required!
@@ -61,7 +61,7 @@ This is an overview of how to view request methods and read form data.
 # form.py
 import sys
 
-from httpout import request, response
+from httpout import wait, request, response
 
 
 method_str = request.environ['REQUEST_METHOD']
@@ -74,6 +74,8 @@ if method_str != 'POST':
     sys.exit()
 
 
+# we can't use await outside the async context
+# so wait() is used here because request.form() is a coroutine object
 form_data = wait(request.form())
 
 print(method_str, method_bytes, form_data)
@@ -84,7 +86,7 @@ It can also be written this way:
 # form.py
 import sys
 
-from httpout import request, response
+from httpout import run, request, response
 
 
 method_str = request.environ['REQUEST_METHOD']
@@ -98,6 +100,7 @@ if method_str != 'POST':
 
 
 async def main():
+    # using await instead of wait()
     form_data = await request.form()
 
     print(method_str, method_bytes, form_data)
@@ -118,15 +121,6 @@ httpout is designed to be fun. It's not built for perfectionists. httpout has:
 - Your `print()`s are sent immediately line by line without waiting for the script to finish like a typical CGI
 - No need for a templating engine, just do `if-else` and `print()` making your script portable for both CLI and web
 - And more
-
-## Builtin objects
-No need to import anything to access these, except [`__main__`](https://docs.python.org/3/library/__main__.html) which can be imported to honor the semantics.
-- `print()`
-- `run()`, runs a coroutine without waiting, it returns a [concurrent.futures.Future](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future) object
-- `wait()` , runs a coroutine and wait until done, it returns the result
-- `__main__`, a reference to your main route, available across your submodule imports
-- `__server__`, a dict object containing basic HTTP request information and etc.
-- `__globals__`, a worker/app-level context. to initialize objects at worker start, you can place them in \_\_globals\_\_.py
 
 ## Security
 It's important to note that httpout only focuses on request security;

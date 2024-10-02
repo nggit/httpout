@@ -1,12 +1,12 @@
 # package: bar
 
 # test import itself
-import  bar
+import bar
 import httpout.run
 
-assert httpout is bar
-assert httpout.run is run
-
 # test relative imports
-from . import baz
-from .baz import world
+from . import baz  # noqa: F401
+from .baz import world  # noqa: F401
+
+assert httpout is bar
+assert httpout.run is run  # noqa: F821

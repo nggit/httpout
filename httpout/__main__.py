@@ -29,6 +29,8 @@ def usage(**context):
     print('  --worker-num              Number of worker processes. Defaults to 1')  # noqa: E501
     print('  --thread-pool-size        Number of executor threads per process')  # noqa: E501
     print('                            Defaults to 5')
+    print('  --limit-memory            Restart the worker if this limit (in KiB) is reached')  # noqa: E501
+    print('                            (Linux-only). Defaults to 0 or unlimited')  # noqa: E501
     print('  --ssl-cert                SSL certificate location')
     print('                            E.g. "/path/to/fullchain.pem"')
     print('  --ssl-key                 SSL private key location')
