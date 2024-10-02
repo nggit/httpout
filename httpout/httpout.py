@@ -143,9 +143,9 @@ class HTTPOut:
                                     child
                                 ]
                             else:
-                                module.__dict__[child] = module.__builtins__[
-                                    child
-                                ]
+                                module.__dict__[child] = getattr(
+                                    builtins, child
+                                )
 
                     return module
 

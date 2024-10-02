@@ -7,7 +7,7 @@ async def main():
     print('Done!')
 
 
-run(main())
+run(main())  # noqa: F821
 print('OK')
 # leaves the thread while main() is still running
 # should print the 'OK' first
