@@ -25,4 +25,8 @@ class Foo:
             __main__.MESSAGES.append(None)
 
 
-hello = Foo().hello
+foo = Foo()
+hello = foo.hello
+
+# test recursive
+foo.bar = foo

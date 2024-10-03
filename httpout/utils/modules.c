@@ -50,35 +50,37 @@ cleanup_modules(PyObject *self, PyObject *args)
                     continue;
                 }
 
-                /*
-                 * attempt to get the __dict__ attribute of the value
-                 * if the value has a __dict__ but is not a type or module, recurse
-                 */
-                PyObject *value_dict = PyObject_GetAttrString(value, "__dict__");
+                if (value != module) {
+                    /*
+                     * attempt to get the __dict__ attribute of the value
+                     * if the value has a __dict__ but is not a type or module, recurse
+                     */
+                    PyObject *value_dict = PyObject_GetAttrString(value, "__dict__");
 
-                if (value_dict == NULL) {
-                    if (PyErr_Occurred()) {
-                        PyErr_Clear();
+                    if (value_dict == NULL) {
+                        if (PyErr_Occurred()) {
+                            PyErr_Clear();
+                        }
+                    } else if (PyDict_Check(value_dict) &&
+                               !PyType_Check(value) &&
+                               !PyModule_Check(value)) {
+                        /* recursively call cleanup_modules for the value's __dict__ */
+                        PyObject *args = Py_BuildValue("(OO)", value_dict, excludes);
+                        PyObject *result = cleanup_modules(self, args);
+                        Py_XDECREF(args);
+
+                        if (result == NULL) {
+                            Py_XDECREF(value_dict);
+                            Py_XDECREF(module_dict);
+                            Py_DECREF(double_underscore);
+                            return NULL;
+                        }
+
+                        Py_XDECREF(result);
                     }
-                } else if (PyDict_Check(value_dict) &&
-                           !PyType_Check(value) &&
-                           !PyModule_Check(value)) {
-                    /* recursively call cleanup_modules for the value's __dict__ */
-                    PyObject *args = Py_BuildValue("(OO)", value_dict, excludes);
-                    PyObject *result = cleanup_modules(self, args);
-                    Py_XDECREF(args);
 
-                    if (result == NULL) {
-                        Py_XDECREF(value_dict);
-                        Py_XDECREF(module_dict);
-                        Py_DECREF(double_underscore);
-                        return NULL;
-                    }
-
-                    Py_XDECREF(result);
+                    Py_XDECREF(value_dict);
                 }
-
-                Py_XDECREF(value_dict);
 
                 /* set the module.__dict__[name] to None */
                 PyDict_SetItem(module_dict, name, Py_None);
