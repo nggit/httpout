@@ -1,0 +1,108 @@
+name: Build and Release
+
+on:
+  push:
+    branches: ['build', 'release']
+  pull_request:
+    branches: ['main', 'master']
+  workflow_dispatch:
+
+jobs:
+  build_sdist:
+    if: >
+      ${{ startsWith(github.event.pull_request.head.ref, 'build') ||
+      startsWith(github.event.pull_request.head.ref, 'release') }}
+    name: Build sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          python -m venv --system-site-packages .local
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          python -m pip install --upgrade pip build setuptools
+
+      - name: Build sdist and verify its integrity
+        run: |
+          python -m build --sdist --no-isolation
+          for f in dist/httpout-*.tar.gz; do gzip -t "$f"; done
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/httpout-*.tar.gz
+
+  build_wheels:
+    if: >
+      ${{ startsWith(github.event.pull_request.head.ref, 'build') ||
+      startsWith(github.event.pull_request.head.ref, 'release') }}
+    name: Build ${{ matrix.cibw_python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        cibw_python:
+        - 'cp37-*'
+        - 'cp38-*'
+        - 'cp39-*'
+        - 'cp310-*'
+        - 'cp311-*'
+        - 'cp312-*'
+        - 'cp313-*'
+        - 'pp310-*'
+        cibw_arch: ['x86_64']
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          python -m venv --system-site-packages .local
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          python -m pip install --upgrade pip
+          python -m pip install cibuildwheel==2.21.1
+
+      - name: Build wheels
+        run: |
+          python -m cibuildwheel --output-dir dist
+        env:
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_BUILD: ${{ matrix.cibw_python }}
+          CIBW_ARCHS: ${{ matrix.cibw_arch }}
+
+      - name: Verify the existence of the '.so' files
+        run: |
+            for f in dist/httpout-*.whl; do
+                unzip -l "$f" | grep '\shttpout/utils/modules\..*\.so$';
+            done
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/httpout-*.whl
+
+  release:
+    if: >
+      ${{ startsWith(github.event.pull_request.head.ref, 'build') ||
+      startsWith(github.event.pull_request.head.ref, 'release') }}
+    name: Upload release to PyPI
+    needs: ['build_sdist', 'build_wheels']
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/httpout
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: dist
+        path: dist
+
+    - run: |
+        tree -L 2
+
+    - name: Publish to PyPI
+      if: ${{ startsWith(github.event.pull_request.head.ref, 'release') }}
+      uses: pypa/gh-action-pypi-publish@release/v1
