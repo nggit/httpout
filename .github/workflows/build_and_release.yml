@@ -46,7 +46,7 @@ jobs:
 
       - name: Verify the existence of the '.so' files
         run: |
-            for f in dist/*.whl; do unzip -l "$f"; break; done | grep '\shttpout/utils/modules\..*\.so$'
+            for f in dist/*.whl; do unzip -l "$f" | grep '\shttpout/utils/modules\..*\.so$'; done
 
       - uses: actions/upload-artifact@v3
         with:
