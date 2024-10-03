@@ -5,7 +5,13 @@
 #define Py_LIMITED_API
 #include <Python.h>
 
-static PyObject* cleanup_modules(PyObject *self, PyObject *args) {
+/* function declarations */
+static PyObject* cleanup_modules(PyObject *self, PyObject *args);
+
+/* function implementations */
+static PyObject*
+cleanup_modules(PyObject *self, PyObject *args)
+{
     PyObject *modules;
     PyObject *excludes = Py_None;
 
