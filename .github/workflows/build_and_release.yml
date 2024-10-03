@@ -17,9 +17,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: |
+          python -m venv --system-site-packages .local
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          python -m pip install --upgrade pip setuptools wheel
+
       - name: Build sdist and verify '.tar.gz' files integrity
         run: |
-          python -m build --sdist
+          python -m build --sdist --no-isolation
           for f in dist/httpout-*.tar.gz; do gzip -t "$f"; done
 
       - uses: actions/upload-artifact@v4
