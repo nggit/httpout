@@ -22,6 +22,7 @@ jobs:
         - 'cp311-*'
         - 'cp312-*'
         - 'cp313-*'
+        - 'pp310-*'
         cibw_arch: ['x86_64']
     timeout-minutes: 10
     steps:
@@ -60,7 +61,7 @@ jobs:
         name: dist
 
     - run: |
-        tree -dL 2
+        tree
 
     - name: Publish to PyPI
       if: ${{ startsWith(github.event.pull_request.head.ref, 'release') }}
