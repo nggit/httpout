@@ -23,7 +23,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           python -m pip install --upgrade pip build setuptools
 
-      - name: Build sdist and verify '.tar.gz' files integrity
+      - name: Build sdist and verify its integrity
         run: |
           python -m build --sdist --no-isolation
           for f in dist/httpout-*.tar.gz; do gzip -t "$f"; done
@@ -106,5 +106,3 @@ jobs:
     - name: Publish to PyPI
       if: ${{ startsWith(github.event.pull_request.head.ref, 'release') }}
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: https://test.pypi.org/legacy/
