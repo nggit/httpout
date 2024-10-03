@@ -9,6 +9,9 @@ on:
 
 jobs:
   build_wheels:
+    if: >
+      ${{ startsWith(github.event.pull_request.head.ref, 'build') ||
+      startsWith(github.event.pull_request.head.ref, 'release') }}
     name: Build ${{ matrix.cibw_python }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -47,6 +50,9 @@ jobs:
           path: dist
 
   release:
+    if: >
+      ${{ startsWith(github.event.pull_request.head.ref, 'build') ||
+      startsWith(github.event.pull_request.head.ref, 'release') }}
     name: Upload release to PyPI
     needs: ['build_wheels']
     runs-on: ubuntu-latest
@@ -62,7 +68,7 @@ jobs:
         path: dist
 
     - run: |
-        tree
+        tree -L 2
 
     - name: Publish to PyPI
       if: ${{ startsWith(github.event.pull_request.head.ref, 'release') }}
