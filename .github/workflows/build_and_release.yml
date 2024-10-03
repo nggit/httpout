@@ -44,6 +44,10 @@ jobs:
           CIBW_BUILD: ${{ matrix.cibw_python }}
           CIBW_ARCHS: ${{ matrix.cibw_arch }}
 
+      - name: Verify the existence of the '.so' files
+        run: |
+            for f in dist/*.whl; do unzip -l "$f"; break; done | grep '\shttpout/utils/modules\..*\.so$'
+
       - uses: actions/upload-artifact@v3
         with:
           name: dist
