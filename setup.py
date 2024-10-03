@@ -1,6 +1,5 @@
 # Copyright (c) 2024 nggit
 
-import glob
 import os
 
 from setuptools import setup, Extension
@@ -13,17 +12,18 @@ class OptionalBuildExt(build_ext):
         try:
             super().build_extension(ext)
         except Exception:
-            base_name = os.path.join(self.build_lib, *ext.name.split('.'))
+            print(
+                f'Failed to build {ext.name}. '
+                'Falling back to pure Python version.'
+            )
+            dirname = os.path.join(self.build_lib, *ext.name.split('.')[:-1])
 
-            for file_name in glob.glob(base_name + '.*'):
-                if not file_name.endswith('.c'):
-                    print(
-                        f'Failed to build {file_name}. '
-                        'Falling back to pure Python version.'
-                    )
-
-                    if os.path.isfile(file_name):
-                        os.unlink(file_name)
+            with os.scandir(dirname) as entries:
+                for entry in entries:
+                    if (entry.name.startswith('modules.') and
+                            not entry.name.endswith('.c') and
+                            os.path.isfile(entry.path)):
+                        os.unlink(entry.path)
 
 
 extensions = [
