@@ -1,0 +1,69 @@
+name: Build and Release
+
+on:
+  push:
+    branches: ['build', 'release']
+  pull_request:
+    branches: ['main', 'master']
+  workflow_dispatch:
+
+jobs:
+  build_wheels:
+    name: Build ${{ matrix.cibw_python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        cibw_python:
+        - 'cp37-*'
+        - 'cp38-*'
+        - 'cp39-*'
+        - 'cp310-*'
+        - 'cp311-*'
+        - 'cp312-*'
+        - 'cp313-*'
+        cibw_arch: ['x86_64']
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # Used to host cibuildwheel
+      - uses: actions/setup-python@v5
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.21.1
+
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir dist
+          env:
+            CIBW_BUILD_VERBOSITY: 1
+            CIBW_BUILD: ${{ matrix.cibw_python }}
+            CIBW_ARCHS: ${{ matrix.cibw_arch }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  release:
+    name: Upload release to PyPI
+    needs: ['build_wheels']
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/httpout
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: dist
+
+    - run: |
+        tree -dL 2
+
+    - name: Publish to PyPI
+      if: ${{ startsWith(github.event.pull_request.head.ref, 'release') }}
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
