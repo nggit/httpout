@@ -21,6 +21,7 @@ jobs:
         run: |
           python -m venv --system-site-packages .local
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          tree -L 2
           python setup.py sdist
           for f in dist/httpout-*.tar.gz; do gzip -t "$f"; done
 
@@ -83,7 +84,7 @@ jobs:
       ${{ startsWith(github.event.pull_request.head.ref, 'build') ||
       startsWith(github.event.pull_request.head.ref, 'release') }}
     name: Upload release to PyPI
-    needs: ['build_wheels']
+    needs: ['build_sdist', 'build_wheels']
     runs-on: ubuntu-latest
     environment:
       name: pypi
