@@ -10,7 +10,7 @@ def cleanup_modules(modules, excludes=()):
                 if value in excludes or name.startswith('__'):
                     continue
 
-                if (hasattr(value, '__dict__') and
+                if (value is not module and hasattr(value, '__dict__') and
                         not isinstance(value, (type, ModuleType))):
                     cleanup_modules(value.__dict__, excludes)
 
