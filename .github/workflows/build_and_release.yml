@@ -9,9 +9,9 @@ on:
 
 jobs:
   build_sdist:
-    if: >
-      ${{ startsWith(github.ref_name, 'build') ||
-      startsWith(github.ref_name, 'release') }}
+    if: |
+      startsWith(github.ref_name, 'build') ||
+      startsWith(github.ref_name, 'release')
     name: Build sdist
     runs-on: ubuntu-latest
     steps:
@@ -34,9 +34,9 @@ jobs:
           path: dist/httpout-*.tar.gz
 
   build_wheels:
-    if: >
-      ${{ startsWith(github.ref_name, 'build') ||
-      startsWith(github.ref_name, 'release') }}
+    if: |
+      startsWith(github.ref_name, 'build') ||
+      startsWith(github.ref_name, 'release')
     name: Build ${{ matrix.cibw_python }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -73,9 +73,9 @@ jobs:
 
       - name: Verify the existence of the '.so' files
         run: |
-            for f in dist/httpout-*.whl; do
-                unzip -l "$f" | grep '\shttpout/utils/modules\..*\.so$';
-            done
+          for f in dist/httpout-*.whl; do
+              unzip -l "$f" | grep '\shttpout/utils/modules\..*\.so$';
+          done
 
       - uses: actions/upload-artifact@v3
         with:
@@ -83,9 +83,9 @@ jobs:
           path: dist/httpout-*.whl
 
   release:
-    if: >
-      ${{ startsWith(github.ref_name, 'build') ||
-      startsWith(github.ref_name, 'release') }}
+    if: |
+      startsWith(github.ref_name, 'build') ||
+      startsWith(github.ref_name, 'release')
     name: Upload release to PyPI
     needs: ['build_sdist', 'build_wheels']
     runs-on: ubuntu-latest
