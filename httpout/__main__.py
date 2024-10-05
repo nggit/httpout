@@ -83,4 +83,7 @@ if __name__ == '__main__':
         print('You must specify DOCUMENT_ROOT. Use "--help" for help')
         sys.exit(1)
 
-    app.run(server_name=b'httpout', **options)
+    if 'server_name' not in options:
+        options['server_name'] = b'httpout'
+
+    app.run(**options)
