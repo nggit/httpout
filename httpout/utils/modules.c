@@ -4,7 +4,6 @@
 #include <string.h>
 
 #define PY_SSIZE_T_CLEAN
-#define Py_LIMITED_API
 #include <Python.h>
 
 /* function declarations */
@@ -40,9 +39,7 @@ cleanup_modules(PyObject *self, PyObject *args)
         PyObject *module_dict = PyObject_GetAttrString(module, "__dict__");
 
         if (module_dict == NULL) {
-            if (PyErr_Occurred()) {
-                PyErr_Clear();
-            }
+            PyErr_Clear();
         } else if (PyDict_Check(module_dict)) {
             PyObject *name, *value;
             Py_ssize_t dict_pos = 0;
@@ -57,8 +54,8 @@ cleanup_modules(PyObject *self, PyObject *args)
                 Py_ssize_t name_size;
                 name_str = PyUnicode_AsUTF8AndSize(name, &name_size);
 
-                if (name_str != NULL && name_size >= 2 &&
-                    strncmp(name_str, "__", 2) == 0) {
+                if (name_str == NULL ||
+                    (name_size >= 2 && strncmp(name_str, "__", 2) == 0)) {
                     continue;
                 }
 
@@ -70,9 +67,7 @@ cleanup_modules(PyObject *self, PyObject *args)
                     PyObject *value_dict = PyObject_GetAttrString(value, "__dict__");
 
                     if (value_dict == NULL) {
-                        if (PyErr_Occurred()) {
-                            PyErr_Clear();
-                        }
+                        PyErr_Clear();
                     } else if (PyDict_Check(value_dict) &&
                                !PyType_Check(value) &&
                                !PyModule_Check(value)) {
@@ -109,6 +104,10 @@ cleanup_modules(PyObject *self, PyObject *args)
             strncmp(module_name_str, "__", 2) != 0) {
             PyDict_SetItem(modules, module_name, Py_None);
         }
+    }
+
+    if (PyErr_Occurred()) {
+        return NULL;
     }
 
     Py_RETURN_NONE;
