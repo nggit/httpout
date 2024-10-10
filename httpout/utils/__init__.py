@@ -2,8 +2,13 @@
 
 __all__ = (
     'WORD_CHARS', 'PATH_CHARS', 'is_safe_path',
-    'exec_module', 'cleanup_modules', 'mime_types'
+    'new_module', 'exec_module', 'cleanup_modules', 'mime_types'
 )
+
+import os  # noqa: E402
+import sys  # noqa: E402
+
+from types import ModuleType  # noqa: E402
 
 try:
     from .modules import cleanup_modules
@@ -20,6 +25,44 @@ def is_safe_path(path):
         return False
 
     return True
+
+
+def new_module(name, level=0, document_root=None):
+    if document_root is None:
+        document_root = os.getcwd()
+
+    module_path = os.path.join(
+        document_root,
+        name.replace('.', os.sep), '__init__.py'
+    )
+
+    if not os.path.isfile(module_path):
+        module_path = os.path.join(
+            document_root, name.replace('.', os.sep) + '.py'
+        )
+
+    if os.path.isfile(module_path):
+        if name in sys.modules:
+            if ('__file__' in sys.modules[name].__dict__ and
+                    sys.modules[name].__file__
+                    .startswith(document_root)):
+                del sys.modules[name]
+
+            raise ImportError(f'module name conflict: {name}')
+
+        module = ModuleType(name)
+        module.__file__ = module_path
+        module.__package__ = (
+            os.path.dirname(module_path)[len(document_root):]
+            .lstrip(os.sep)
+            .rsplit(os.sep, level)[0]
+            .replace(os.sep, '.')
+        )
+
+        if name == module.__package__:
+            module.__path__ = [os.path.dirname(module_path)]
+
+        return module
 
 
 def exec_module(module, code=None, cleanup=False):
