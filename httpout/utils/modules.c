@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2024 nggit
  */
+#include <string.h>
+
 #define PY_SSIZE_T_CLEAN
 #define Py_LIMITED_API
 #include <Python.h>
@@ -20,16 +22,17 @@ cleanup_modules(PyObject *self, PyObject *args)
     }
 
     if (!PyDict_Check(modules)) {
-        PyErr_SetString(PyExc_TypeError, "modules.c: first argument must be a dictionary");
+        PyErr_SetString(PyExc_TypeError,
+                        "modules.c: first argument must be a dictionary");
         return NULL;
     }
 
     if (excludes != Py_None && !PySequence_Check(excludes)) {
-        PyErr_SetString(PyExc_TypeError, "modules.c: second argument must be an iterable or None");
+        PyErr_SetString(PyExc_TypeError,
+                        "modules.c: second argument must be an iterable or None");
         return NULL;
     }
 
-    PyObject *double_underscore = PyUnicode_FromString("__");
     PyObject *module_name, *module;
     Py_ssize_t pos = 0;
 
@@ -45,8 +48,17 @@ cleanup_modules(PyObject *self, PyObject *args)
             Py_ssize_t dict_pos = 0;
 
             while (PyDict_Next(module_dict, &dict_pos, &name, &value)) {
-                if ((excludes != Py_None && PySequence_Contains(excludes, value)) ||
-                    (PyUnicode_Check(name) && PyUnicode_Find(name, double_underscore, 0, 2, 1) == 0)) {
+                if (excludes != Py_None && PySequence_Contains(excludes, value)) {
+                    continue;
+                }
+
+                /* skip if the name starts with "__" */
+                const char *name_str;
+                Py_ssize_t name_size;
+                name_str = PyUnicode_AsUTF8AndSize(name, &name_size);
+
+                if (name_str != NULL && name_size >= 2 &&
+                    strncmp(name_str, "__", 2) == 0) {
                     continue;
                 }
 
@@ -72,7 +84,6 @@ cleanup_modules(PyObject *self, PyObject *args)
                         if (result == NULL) {
                             Py_XDECREF(value_dict);
                             Py_XDECREF(module_dict);
-                            Py_DECREF(double_underscore);
                             return NULL;
                         }
 
@@ -90,13 +101,16 @@ cleanup_modules(PyObject *self, PyObject *args)
         Py_XDECREF(module_dict);
 
         /* set the module itself to None if it doesn't start with "__" */
-        if (PyUnicode_Check(module_name) &&
-            PyUnicode_Find(module_name, double_underscore, 0, 2, 1) == -1) {
+        const char *module_name_str;
+        Py_ssize_t module_name_size;
+        module_name_str = PyUnicode_AsUTF8AndSize(module_name, &module_name_size);
+
+        if (module_name_str != NULL && module_name_size >= 2 &&
+            strncmp(module_name_str, "__", 2) != 0) {
             PyDict_SetItem(modules, module_name, Py_None);
         }
     }
 
-    Py_DECREF(double_underscore);
     Py_RETURN_NONE;
 }
 
