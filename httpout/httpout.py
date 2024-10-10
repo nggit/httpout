@@ -16,7 +16,7 @@ from tremolo.utils import html_escape
 
 from .lib.http_request import HTTPRequest
 from .lib.http_response import HTTPResponse
-from .utils import is_safe_path, exec_module, mime_types
+from .utils import is_safe_path, new_module, exec_module, mime_types
 
 
 class HTTPOut:
@@ -44,43 +44,15 @@ class HTTPOut:
                 # already imported
                 return globals['__main__'].__server__.modules[name]
 
-            module_path = os.path.join(
-                document_root,
-                name.replace('.', os.sep), '__init__.py'
-            )
+            module = new_module(name, level, document_root)
 
-            if not os.path.isfile(module_path):
-                module_path = os.path.join(
-                    document_root, name.replace('.', os.sep) + '.py'
-                )
-
-            if os.path.isfile(module_path):
-                if name in sys.modules:
-                    if ('__file__' in sys.modules[name].__dict__ and
-                            sys.modules[name].__file__
-                            .startswith(document_root)):
-                        del sys.modules[name]
-
-                    raise ImportError(f'module name conflict: {name}')
-
+            if module:
                 logger.info(
                     '%d: %s: importing %s',
                     globals['__main__'].__server__.request.socket.fileno(),
                     globals['__name__'],
                     name
                 )
-                module = ModuleType(name)
-                module.__file__ = module_path
-                module.__package__ = (
-                    os.path.dirname(module_path)[len(document_root):]
-                    .lstrip(os.sep)
-                    .rsplit(os.sep, level)[0]
-                    .replace(os.sep, '.')
-                )
-
-                if name == module.__package__:
-                    module.__path__ = [os.path.dirname(module_path)]
-
                 module.__main__ = globals['__main__']
                 module.__server__ = globals['__main__'].__server__
                 module.print = globals['__main__'].print
@@ -163,13 +135,10 @@ class HTTPOut:
         sys.path.insert(0, document_root)
 
         # provides __globals__, a worker-level context
-        builtins.__globals__ = ModuleType('__globals__')  # noqa: F821
-        __globals__.__file__ = os.path.join(  # noqa: F821
-            document_root, '__globals__.py'
-        )
+        builtins.__globals__ = new_module('__globals__')
         app.ctx = Context()
 
-        if os.path.isfile(__globals__.__file__):  # noqa: F821
+        if __globals__:  # noqa: F821
             exec_module(__globals__)  # noqa: F821
 
             if '__enter__' in __globals__.__dict__:  # noqa: F821
@@ -177,6 +146,8 @@ class HTTPOut:
 
                 if hasattr(coro, '__await__'):
                     await coro
+        else:
+            builtins.__globals__ = ModuleType('__globals__')
 
         app.add_middleware(self._on_request, 'request')
 
