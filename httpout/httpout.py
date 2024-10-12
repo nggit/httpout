@@ -10,13 +10,14 @@ from types import ModuleType
 
 from awaiter import MultiThreadExecutor
 from tremolo.exceptions import BadRequest, NotFound, Forbidden
-from tremolo.lib.contexts import Context
 from tremolo.lib.websocket import WebSocket
 from tremolo.utils import html_escape
 
 from .lib.http_request import HTTPRequest
 from .lib.http_response import HTTPResponse
-from .utils import is_safe_path, new_module, exec_module, mime_types
+from .utils import (
+    is_safe_path, new_module, exec_module, cleanup_modules, mime_types
+)
 
 
 class HTTPOut:
@@ -136,7 +137,7 @@ class HTTPOut:
 
         # provides __globals__, a worker-level context
         builtins.__globals__ = new_module('__globals__')
-        app.ctx = Context()
+        app.ctx = worker_ctx
 
         if __globals__:  # noqa: F821
             exec_module(__globals__)  # noqa: F821
@@ -152,7 +153,6 @@ class HTTPOut:
         app.add_middleware(self._on_request, 'request')
 
     async def _on_worker_stop(self, **worker):
-        worker_ctx = worker['context']
         app = worker['app']
 
         try:
@@ -162,7 +162,7 @@ class HTTPOut:
                 if hasattr(coro, '__await__'):
                     await coro
         finally:
-            await worker_ctx.executor.shutdown()
+            await app.ctx.executor.shutdown()
 
     async def _on_request(self, **server):
         request = server['request']
@@ -221,7 +221,7 @@ class HTTPOut:
                 '%d: %s -> __main__: %s',
                 request.socket.fileno(), path, module_path
             )
-            __server__ = Context()
+            __server__ = request.ctx
             __server__.request = HTTPRequest(request, __server__.__dict__)
             __server__.response = HTTPResponse(response)
             __server__.REQUEST_METHOD = request.method.decode('latin-1')
@@ -263,7 +263,7 @@ class HTTPOut:
             try:
                 # execute module in another thread
                 result = await worker_ctx.executor.submit(
-                    exec_module, module, code, True
+                    exec_module, module, code
                 )
                 await __server__.response.join()
 
@@ -305,6 +305,13 @@ class HTTPOut:
                 else:
                     request.protocol.print_exception(exc)
             finally:
+                await worker_ctx.executor.submit(
+                    cleanup_modules, __server__.modules, (module.print,
+                                                          module.run,
+                                                          module.wait,
+                                                          __server__.response)
+                )
+                await __server__.response.join()
                 __server__.modules.clear()
             # EOF
             return b''

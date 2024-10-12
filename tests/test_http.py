@@ -13,7 +13,7 @@ from tests.utils import getcontents  # noqa: E402
 
 class TestHTTP(unittest.TestCase):
     def setUp(self):
-        print('[', self.id(), ']')
+        print('\r\n[', self.id(), ']')
 
     def test_index_notfound(self):
         header, body = getcontents(host=HTTP_HOST,

@@ -21,7 +21,7 @@ def run():
 
 class TestCLI(unittest.TestCase):
     def setUp(self):
-        print('[', self.id(), ']')
+        print('\r\n[', self.id(), ']')
 
         self.output = StringIO()
 

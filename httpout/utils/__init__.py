@@ -65,23 +65,15 @@ def new_module(name, level=0, document_root=None):
         return module
 
 
-def exec_module(module, code=None, cleanup=False):
+def exec_module(module, code=None):
     if code is None:
         with open(module.__file__, 'r') as f:
             code = compile(f.read(), '<string>', 'exec')
             exec(code, module.__dict__)  # nosec B102
-    else:
-        exec(code, module.__dict__)  # nosec B102
-        code = None
 
-    if cleanup:
-        module.wait(module.__server__.response.join())
-        cleanup_modules(
-            module.__server__.modules,
-            (module.print, module.run, module.wait, module.__server__.response)
-        )
+        return code
 
-    return code
+    exec(code, module.__dict__)  # nosec B102
 
 
 # https://developer.mozilla.org
