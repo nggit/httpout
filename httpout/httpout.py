@@ -15,7 +15,9 @@ from tremolo.utils import html_escape
 
 from .lib.http_request import HTTPRequest
 from .lib.http_response import HTTPResponse
-from .utils import is_safe_path, new_module, exec_module, mime_types
+from .utils import (
+    is_safe_path, new_module, exec_module, cleanup_modules, mime_types
+)
 
 
 class HTTPOut:
@@ -261,7 +263,7 @@ class HTTPOut:
             try:
                 # execute module in another thread
                 result = await worker_ctx.executor.submit(
-                    exec_module, module, code, True
+                    exec_module, module, code
                 )
                 await __server__.response.join()
 
@@ -303,6 +305,13 @@ class HTTPOut:
                 else:
                     request.protocol.print_exception(exc)
             finally:
+                await worker_ctx.executor.submit(
+                    cleanup_modules, __server__.modules, (module.print,
+                                                          module.run,
+                                                          module.wait,
+                                                          __server__.response)
+                )
+                await __server__.response.join()
                 __server__.modules.clear()
             # EOF
             return b''
