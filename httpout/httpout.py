@@ -22,8 +22,8 @@ from .utils import (
 
 class HTTPOut:
     def __init__(self, app):
-        app.events['worker_start'].append((999, self._on_worker_start))
-        app.events['worker_stop'].append((999, self._on_worker_stop))
+        app.add_hook(self._on_worker_start, 'worker_start')
+        app.add_hook(self._on_worker_stop, 'worker_stop')
         app.add_middleware(self._on_request, 'request', priority=9999)  # low
         app.add_middleware(self._on_close, 'close')
 
