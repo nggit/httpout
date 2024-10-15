@@ -22,8 +22,9 @@ from .utils import (
 
 class HTTPOut:
     def __init__(self, app):
-        app.events['worker_start'].append(self._on_worker_start)
-        app.events['worker_stop'].append(self._on_worker_stop)
+        app.events['worker_start'].append((999, self._on_worker_start))
+        app.events['worker_stop'].append((999, self._on_worker_stop))
+        app.add_middleware(self._on_request, 'request', priority=9999)  # low
         app.add_middleware(self._on_close, 'close')
 
     async def _on_worker_start(self, **worker):
@@ -149,8 +150,6 @@ class HTTPOut:
                     await coro
         else:
             builtins.__globals__ = ModuleType('__globals__')
-
-        app.add_middleware(self._on_request, 'request')
 
     async def _on_worker_stop(self, **worker):
         app = worker['app']

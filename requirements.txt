@@ -1,2 +1,2 @@
 awaiter
-tremolo>=0.0.707
+tremolo>=0.0.720
