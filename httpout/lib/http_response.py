@@ -93,7 +93,7 @@ class HTTPResponse:
         while i > 0:
             i -= 1
 
-            if await middlewares[i][0](context=self.response.request.ctx,
+            if await middlewares[i][1](context=self.response.request.ctx,
                                        request=self.response.request,
                                        response=self.response,
                                        loop=self.loop):
