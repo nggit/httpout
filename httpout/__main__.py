@@ -2,11 +2,11 @@
 
 import sys
 
-from tremolo import Tremolo
-from tremolo.utils import parse_args
-from httpout import HTTPOut
+import tremolo
 
-app = Tremolo()
+from httpout import __version__, HTTPOut
+
+app = tremolo.Tremolo()
 
 HTTPOut(app)
 
@@ -42,10 +42,11 @@ def usage(**context):
     print('  --loop                    A fully qualified event loop name')
     print('                            E.g. "asyncio" or "asyncio.SelectorEventLoop"')  # noqa: E501
     print('                            It expects the respective module to already be present')  # noqa: E501
+    print('  --version                 Print the httpout version and exit')
     print('  --help                    Show this help and exit')
     print()
     print('Please run "python3 -m tremolo --help" to see more available options')  # noqa: E501
-    sys.exit()
+    return 0
 
 
 def bind(value='', **context):
@@ -60,7 +61,18 @@ def bind(value='', **context):
                 app.listen(bind)
     except ValueError:
         print(f'Invalid --bind value "{value}"')
-        sys.exit(1)
+        return 1
+
+
+def version(**context):
+    print(
+        'httpout %s (tremolo %s, %s %d.%d.%d, %s)' % (__version__,
+                                                      tremolo.__version__,
+                                                      sys.implementation.name,
+                                                      *sys.version_info[:3],
+                                                      sys.platform)
+    )
+    return 0
 
 
 def threads(value, **context):
@@ -70,11 +82,13 @@ def threads(value, **context):
         print(
             f'Invalid --thread-pool-size value "{value}". It must be a number'
         )
-        sys.exit(1)
+        return 1
 
 
 if __name__ == '__main__':
-    options = parse_args(help=usage, bind=bind, thread_pool_size=threads)
+    options = tremolo.utils.parse_args(
+        help=usage, bind=bind, version=version, thread_pool_size=threads
+    )
 
     if sys.argv[-1] != sys.argv[0] and not sys.argv[-1].startswith('-'):
         options['document_root'] = sys.argv[-1]

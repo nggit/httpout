@@ -68,6 +68,23 @@ class TestHTTP(unittest.TestCase):
             b'5\r\nNone\n\r\n0\r\n\r\n'
         )
 
+    def test_import_error(self):
+        header, body = getcontents(host=HTTP_HOST,
+                                   port=HTTP_PORT,
+                                   method='GET',
+                                   url='/import.py',
+                                   version='1.1')
+
+        self.assertEqual(
+            header[:header.find(b'\r\n')],
+            b'HTTP/1.1 500 Internal Server Error'
+        )
+        self.assertEqual(
+            body,
+            b'5A\r\n<ul><li>ImportError: cannot import name &#x27;ne&#x27; '
+            b'from &#x27;httpout&#x27;</li></ul>\n\r\n0\r\n\r\n'
+        )
+
     def test_hybrid(self):
         header, body = getcontents(host=HTTP_HOST,
                                    port=HTTP_PORT,
