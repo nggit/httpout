@@ -117,9 +117,15 @@ class HTTPOut:
                                     child
                                 ]
                             else:
-                                module.__dict__[child] = getattr(
-                                    builtins, child
-                                )
+                                try:
+                                    module.__dict__[child] = getattr(
+                                        builtins, child
+                                    )
+                                except AttributeError as exc:
+                                    raise ImportError(
+                                        f'cannot import name \'{child}\' '
+                                        f'from \'{name}\''
+                                    ) from exc
 
                     return module
 
