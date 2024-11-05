@@ -42,16 +42,16 @@ class HTTPOut:
             return asyncio.run_coroutine_threadsafe(coro, loop).result(timeout)
 
         def load_module(name, globals, level=0):
-            if name in globals['__main__'].__server__.modules:
+            if name in globals['__main__'].__server__['modules']:
                 # already imported
-                return globals['__main__'].__server__.modules[name]
+                return globals['__main__'].__server__['modules'][name]
 
             module = new_module(name, level, document_root)
 
             if module:
                 logger.info(
                     '%d: %s: importing %s',
-                    globals['__main__'].__server__.request.socket.fileno(),
+                    globals['__main__'].__server__['request'].socket.fileno(),
                     globals['__name__'],
                     name
                 )
@@ -60,7 +60,7 @@ class HTTPOut:
                 module.print = globals['__main__'].print
                 module.run = globals['__main__'].run
                 module.wait = wait
-                globals['__main__'].__server__.modules[name] = module
+                globals['__main__'].__server__['modules'][name] = module
 
                 exec_module(module)
                 return module
@@ -75,7 +75,8 @@ class HTTPOut:
                 if name == '__main__':
                     logger.info(
                         '%d: %s: importing __main__',
-                        globals['__main__'].__server__.request.socket.fileno(),
+                        globals['__main__'].__server__['request']
+                                           .socket.fileno(),
                         globals['__name__']
                     )
                     return globals['__main__']
@@ -101,7 +102,7 @@ class HTTPOut:
                     return module
 
                 if name == 'httpout' or name.startswith('httpout.'):
-                    module = globals['__main__'].__server__.modules[
+                    module = globals['__main__'].__server__['modules'][
                         globals['__name__']
                     ]
 
@@ -226,37 +227,36 @@ class HTTPOut:
                 '%d: %s -> __main__: %s',
                 request.socket.fileno(), path, module_path
             )
-            __server__ = request.ctx
-            __server__.request = HTTPRequest(request, __server__.__dict__)
-            __server__.response = HTTPResponse(response)
-            __server__.REQUEST_METHOD = request.method.decode('latin-1')
-            __server__.SCRIPT_NAME = module_path[len(document_root):].replace(
+            server['request'] = HTTPRequest(request, server)
+            server['response'] = HTTPResponse(response)
+            server['REQUEST_METHOD'] = request.method.decode('latin-1')
+            server['SCRIPT_NAME'] = module_path[len(document_root):].replace(
                 os.sep, '/'
             )
-            __server__.PATH_INFO = path_info
-            __server__.QUERY_STRING = request.query_string.decode('latin-1')
-            __server__.REMOTE_ADDR = request.ip.decode('latin-1')
-            __server__.HTTP_HOST = request.host.decode('latin-1')
-            __server__.REQUEST_URI = request_uri
-            __server__.REQUEST_SCHEME = request.scheme.decode('latin-1')
-            __server__.DOCUMENT_ROOT = document_root
+            server['PATH_INFO'] = path_info
+            server['QUERY_STRING'] = request.query_string.decode('latin-1')
+            server['REMOTE_ADDR'] = request.ip.decode('latin-1')
+            server['HTTP_HOST'] = request.host.decode('latin-1')
+            server['REQUEST_URI'] = request_uri
+            server['REQUEST_SCHEME'] = request.scheme.decode('latin-1')
+            server['DOCUMENT_ROOT'] = document_root
 
             if (request.protocol.options['ws'] and
                     b'upgrade' in request.headers and
                     b'connection' in request.headers and
                     b'sec-websocket-key' in request.headers and
                     request.headers[b'upgrade'].lower() == b'websocket'):
-                __server__.websocket = WebSocket(request, response)
+                server['websocket'] = WebSocket(request, response)
             else:
-                __server__.websocket = None
+                server['websocket'] = None
 
             module = ModuleType('__main__')
             module.__file__ = module_path
             module.__main__ = module
-            __server__.modules = {'__main__': module}
-            module.__server__ = __server__
-            module.print = __server__.response.print
-            module.run = __server__.response.run_coroutine
+            server['modules'] = {'__main__': module}
+            module.__server__ = server
+            module.print = server['response'].print
+            module.run = server['response'].run_coroutine
             module.wait = worker_ctx.wait
             code = worker_ctx.caches.get(module_path, None)
 
@@ -270,7 +270,7 @@ class HTTPOut:
                 result = await worker_ctx.executor.submit(
                     exec_module, module, code
                 )
-                await __server__.response.join()
+                await server['response'].join()
 
                 if result:
                     worker_ctx.caches[module_path] = result
@@ -280,9 +280,9 @@ class HTTPOut:
                 else:
                     # cache is going to be deleted on @app.on_close
                     # but it can be delayed on a Keep-Alive request
-                    request.ctx.module_path = module_path
+                    server['context'].module_path = module_path
             except BaseException as exc:
-                await __server__.response.join()
+                await server['response'].join()
 
                 if not response.headers_sent():
                     response.set_status(500, b'Internal Server Error')
@@ -311,13 +311,12 @@ class HTTPOut:
                     request.protocol.print_exception(exc)
             finally:
                 await worker_ctx.executor.submit(
-                    cleanup_modules, __server__.modules, (module.print,
-                                                          module.run,
-                                                          module.wait,
-                                                          __server__.response)
+                    cleanup_modules,
+                    server['modules'],
+                    (module.print, module.run, module.wait, server['response'])
                 )
-                await __server__.response.join()
-                __server__.modules.clear()
+                await server['response'].join()
+                server['modules'].clear()
             # EOF
             return b''
 
