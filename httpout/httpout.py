@@ -19,6 +19,8 @@ from .utils import (
     is_safe_path, new_module, exec_module, cleanup_modules, mime_types
 )
 
+_INDEX_FILES = ('index.py', 'index.html')
+
 
 class HTTPOut:
     def __init__(self, app):
@@ -211,7 +213,8 @@ class HTTPOut:
         if ext == '':
             dirname = module_path
 
-            for basename in ('index.py', 'index.html'):
+            # no file extension in the URL, try index.py, index.html, etc.
+            for basename in _INDEX_FILES:
                 module_path = os.path.join(dirname, basename)
                 ext = os.path.splitext(basename)[-1]
 
