@@ -21,7 +21,7 @@ jobs:
         run: |
           python -m venv --system-site-packages .local
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          python -m pip install --upgrade pip build setuptools
+          python -m pip install --upgrade pip build setuptools Cython
 
       - name: Build sdist and verify its integrity
         run: |

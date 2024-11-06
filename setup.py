@@ -29,5 +29,6 @@ extensions = [
 
 setup(
     ext_modules=cythonize(extensions),
-    cmdclass={'build_ext': OptionalBuildExt}
+    cmdclass={'build_ext': OptionalBuildExt},
+    setup_requires=['Cython']
 )
