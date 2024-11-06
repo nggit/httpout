@@ -15,7 +15,7 @@ description = """\
 requires-python = '>=3.7'
 dependencies = [
     'awaiter',
-    'tremolo>=0.0.753',
+    'tremolo>=0.0.760',
 ]
 license = { text = 'MIT License' }
 classifiers = [
