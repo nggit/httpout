@@ -21,7 +21,8 @@ jobs:
         run: |
           python -m venv --system-site-packages .local
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          python -m pip install --upgrade pip build setuptools cython
+          python -m pip install --upgrade pip build setuptools
+          python -m pip install --upgrade git+https://github.com/cython/cython@3.0.11
 
       - name: Build sdist and verify its integrity
         run: |
@@ -62,7 +63,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           python -m pip install --upgrade pip
           python -m pip install cibuildwheel==2.21.1
-          python -m pip install cython
+          python -m pip install --upgrade git+https://github.com/cython/cython@3.0.11
 
       - name: Build wheels
         run: |
