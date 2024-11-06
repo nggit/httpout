@@ -4,6 +4,7 @@ import os
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+from Cython.Build import cythonize
 
 
 class OptionalBuildExt(build_ext):
@@ -16,25 +17,17 @@ class OptionalBuildExt(build_ext):
                 f'Failed to build {ext.name}. '
                 'Falling back to pure Python version.'
             )
-            dirname = os.path.join(self.build_lib, *ext.name.split('.')[:-1])
-
-            with os.scandir(dirname) as entries:
-                for entry in entries:
-                    if (entry.name.startswith('modules.') and
-                            not entry.name.endswith('.c') and
-                            os.path.isfile(entry.path)):
-                        os.unlink(entry.path)
 
 
 extensions = [
     Extension(
         'httpout.utils.modules',
-        sources=[os.path.join('httpout', 'utils', 'modules.c')],
+        sources=[os.path.join('httpout', 'utils', 'modules.pyx')],
         optional=True
     )
 ]
 
 setup(
-    ext_modules=extensions,
+    ext_modules=cythonize(extensions),
     cmdclass={'build_ext': OptionalBuildExt}
 )

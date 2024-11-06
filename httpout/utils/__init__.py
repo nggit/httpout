@@ -10,10 +10,7 @@ import sys  # noqa: E402
 
 from types import ModuleType  # noqa: E402
 
-try:
-    from .modules import cleanup_modules
-except ImportError:
-    from ._modules import cleanup_modules
+from .modules import exec_module, cleanup_modules  # noqa: E402
 
 # \w
 WORD_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
@@ -63,17 +60,6 @@ def new_module(name, level=0, document_root=None):
             module.__path__ = [os.path.dirname(module_path)]
 
         return module
-
-
-def exec_module(module, code=None):
-    if code is None:
-        with open(module.__file__, 'r') as f:
-            code = compile(f.read(), '<string>', 'exec')
-            exec(code, module.__dict__)  # nosec B102
-
-        return code
-
-    exec(code, module.__dict__)  # nosec B102
 
 
 # https://developer.mozilla.org
