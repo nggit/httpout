@@ -1,5 +1,10 @@
 
-import asyncio
+import __main__
+
+from httpout import app, __globals__
+
+# just for testing. the only thing that matters here is the `app` :)
+assert __main__ is __globals__
 
 # in routes it should be available as `__globals__.counter`
 # you can't access this from inside the middleware, btw
@@ -24,22 +29,15 @@ class _MyMiddleware:
         del response.headers[b'x-debug']
 
 
-# you have access to the httpout's app object when
-# the worker starts (`__enter__`) or ends (`__exit__`)
-# allowing you to inject middlewares and etc.
-def __enter__(app):
-    app.logger.info('entering %s', __file__)
+app.logger.info('entering %s', __file__)
 
-    # apply middleware
-    _MyMiddleware(app)
-
-    app.ctx.sleep = asyncio.sleep(1)
+# apply middleware
+_MyMiddleware(app)
 
 
-# `async` is also supported
-async def __exit__(app):
+@app.on_worker_stop
+async def _on_worker_stop(**worker):
     app.logger.info('exiting %s', __file__)
 
     # incremented in `main.py`
     assert counter > 0
-    await app.ctx.sleep
