@@ -123,13 +123,13 @@ class HTTPOut:
 
                             if (globals['__name__'] == '__globals__' or
                                     child not in module.__server__):
-                                try:
-                                    module.__dict__[child] = worker[child]
-                                except KeyError as exc:
+                                if child not in worker:
                                     raise ImportError(
                                         f'cannot import name \'{child}\' '
                                         f'from \'{name}\''
-                                    ) from exc
+                                    )
+
+                                module.__dict__[child] = worker[child]
                             else:
                                 module.__dict__[child] = module.__server__[
                                     child
