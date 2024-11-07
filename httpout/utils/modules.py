@@ -8,7 +8,7 @@ from types import ModuleType
 def exec_module(module, code=None, max_size=8 * 1048576):
     if code is None:
         if os.stat(module.__file__).st_size > max_size:
-            raise OSError(f'File {module.__file__} exceeds the max_size')
+            raise ValueError(f'File {module.__file__} exceeds the max_size')
 
         with open(module.__file__, 'r') as f:
             code = compile(f.read(), '<string>', 'exec')

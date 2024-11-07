@@ -23,10 +23,9 @@ def exec_module(module, code=None, size_t max_size=8 * 1048576):
 
         if file_size > max_size:
             fclose(fp)
-            raise OSError(f'File {module.__file__} exceeds the max_size')
+            raise ValueError(f'File {module.__file__} exceeds the max_size')
 
         fseek(fp, 0, SEEK_SET)
-
         data = bytearray()
 
         while True:
