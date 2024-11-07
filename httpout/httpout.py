@@ -317,8 +317,9 @@ class HTTPOut:
                     cleanup_modules, server['modules'], (module.print,
                                                          module.run,
                                                          module.wait,
-                                                         server['response'],
-                                                         server['context'])
+                                                         worker_ctx,
+                                                         server['context'],
+                                                         server['response'])
                 )
                 await server['response'].join()
                 server['modules'].clear()
