@@ -81,7 +81,7 @@ class TestHTTP(unittest.TestCase):
         )
         self.assertEqual(
             body,
-            b'5A\r\n<ul><li>ImportError: cannot import name &#x27;ne&#x27; '
+            b'5B\r\n<ul><li>ImportError: cannot import name &#x27;app&#x27; '
             b'from &#x27;httpout&#x27;</li></ul>\n\r\n0\r\n\r\n'
         )
 

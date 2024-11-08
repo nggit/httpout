@@ -1,10 +1,10 @@
 
 import __main__
 
-from httpout import app, __globals__
+from httpout import app, modules
 
 # just for testing. the only thing that matters here is the `app` :)
-assert __main__ is __globals__
+assert __main__ is modules['__globals__']
 
 # in routes it should be available as `__globals__.counter`
 # you can't access this from inside the middleware, btw
