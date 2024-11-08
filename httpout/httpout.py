@@ -45,15 +45,20 @@ class HTTPOut:
 
         # provides __globals__, a worker-level context
         worker['__globals__'] = new_module('__globals__')
+        worker['modules'] = {'__globals__': worker['__globals__']}
 
         def wait(coro, timeout=None):
             return asyncio.run_coroutine_threadsafe(coro, loop).result(timeout)
 
         def load_module(name, globals, level=0):
-            if (globals['__name__'] != '__globals__' and
-                    name in globals['__main__'].__server__['modules']):
+            if globals['__name__'] == '__globals__':
+                modules = worker['modules']
+            else:
+                modules = globals['__main__'].__server__['modules']
+
+            if name in modules:
                 # already imported
-                return globals['__main__'].__server__['modules'][name]
+                return modules[name]
 
             module = new_module(name, level, document_root)
 
@@ -66,9 +71,10 @@ class HTTPOut:
                     module.print = globals['__main__'].print
                     module.run = globals['__main__'].run
                     module.wait = wait
-                    globals['__main__'].__server__['modules'][name] = module
 
+                modules[name] = module
                 exec_module(module)
+
                 return module
 
         py_import = builtins.__import__
@@ -108,7 +114,7 @@ class HTTPOut:
 
                 if name == 'httpout' or name.startswith('httpout.'):
                     if globals['__name__'] == '__globals__':
-                        module = worker['__globals__']
+                        module = worker['modules'][globals['__name__']]
                     else:
                         module = globals['__main__'].__server__['modules'][
                             globals['__name__']
@@ -121,19 +127,20 @@ class HTTPOut:
                             if child in module.__dict__:
                                 continue
 
-                            if (globals['__name__'] == '__globals__' or
-                                    child not in module.__server__):
-                                if child not in worker:
-                                    raise ImportError(
-                                        f'cannot import name \'{child}\' '
-                                        f'from \'{name}\''
-                                    )
-
-                                module.__dict__[child] = worker[child]
-                            else:
+                            if (globals['__name__'] != '__globals__' and
+                                    child in module.__server__):
                                 module.__dict__[child] = module.__server__[
                                     child
                                 ]
+                            elif child in worker and (
+                                    child != 'app' or
+                                    globals['__name__'] == '__globals__'):
+                                module.__dict__[child] = worker[child]
+                            else:
+                                raise ImportError(
+                                    f'cannot import name \'{child}\' '
+                                    f'from \'{name}\''
+                                )
 
                     return module
 
