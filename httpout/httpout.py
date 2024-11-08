@@ -167,7 +167,7 @@ class HTTPOut:
         request = server['request']
         response = server['response']
         logger = server['logger']
-        worker_ctx = server['worker']
+        worker_ctx = server['globals']
         document_root = worker_ctx.options['document_root']
 
         if not request.is_valid:
@@ -326,7 +326,7 @@ class HTTPOut:
 
     async def _on_close(self, **server):
         request_ctx = server['context']
-        worker_ctx = server['worker']
+        worker_ctx = server['globals']
         logger = server['logger']
 
         if 'module_path' in request_ctx:
