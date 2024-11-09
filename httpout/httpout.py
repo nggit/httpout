@@ -30,14 +30,14 @@ class HTTPOut:
         app.add_middleware(self._on_close, 'close')
 
     async def _on_worker_start(self, **worker):
-        worker_ctx = worker['context']
         loop = worker['loop']
         logger = worker['logger']
-        thread_pool_size = worker_ctx.options.get('thread_pool_size', 5)
+        g = worker['globals']
+        thread_pool_size = g.options.get('thread_pool_size', 5)
         document_root = os.path.abspath(
-            worker_ctx.options.get('document_root', os.getcwd())
+            g.options.get('document_root', os.getcwd())
         )
-        worker_ctx.options['document_root'] = document_root
+        g.options['document_root'] = document_root
 
         logger.info('entering directory: %s', document_root)
         os.chdir(document_root)
@@ -148,27 +148,29 @@ class HTTPOut:
 
         builtins.__import__ = ho_import
 
-        worker_ctx.wait = wait
-        worker_ctx.caches = {}
-        worker_ctx.executor = MultiThreadExecutor(thread_pool_size)
-        worker_ctx.executor.start()
+        g.wait = wait
+        g.caches = {}
+        g.executor = MultiThreadExecutor(thread_pool_size)
+        g.executor.start()
 
         if worker['__globals__']:
-            exec_module(worker['__globals__'])
-
             builtins.__globals__ = worker['__globals__']
+            exec_module(worker['__globals__'])
         else:
             builtins.__globals__ = ModuleType('__globals__')
 
     async def _on_worker_stop(self, **worker):
-        await worker['context'].executor.shutdown()
+        g = worker['globals']
+
+        await g.executor.shutdown()
 
     async def _on_request(self, **server):
         request = server['request']
         response = server['response']
         logger = server['logger']
-        worker_ctx = server['globals']
-        document_root = worker_ctx.options['document_root']
+        ctx = server['context']
+        g = server['globals']
+        document_root = g.options['document_root']
 
         if not request.is_valid:
             raise BadRequest
@@ -249,26 +251,24 @@ class HTTPOut:
             module.__server__ = server
             module.print = server['response'].print
             module.run = server['response'].run_coroutine
-            module.wait = worker_ctx.wait
-            code = worker_ctx.caches.get(module_path, None)
+            module.wait = g.wait
+            code = g.caches.get(module_path, None)
 
             if code:
                 logger.info('%s: using cache', path)
 
             try:
                 # execute module in another thread
-                result = await worker_ctx.executor.submit(
-                    exec_module, module, code
-                )
+                result = await g.executor.submit(exec_module, module, code)
                 await server['response'].join()
 
                 if result:
-                    worker_ctx.caches[module_path] = result
+                    g.caches[module_path] = result
                     logger.info('%s: cached', path)
                 else:
                     # cache is going to be deleted on @app.on_close
                     # but it can be delayed on a Keep-Alive request
-                    server['context'].module_path = module_path
+                    ctx.module_path = module_path
             except BaseException as exc:
                 await server['response'].join()
 
@@ -298,12 +298,12 @@ class HTTPOut:
                 else:
                     request.protocol.print_exception(exc)
             finally:
-                await worker_ctx.executor.submit(
+                await g.executor.submit(
                     cleanup_modules, server['modules'], (module.print,
                                                          module.run,
                                                          module.wait,
-                                                         worker_ctx,
-                                                         server['context'],
+                                                         g,
+                                                         ctx,
                                                          server['response'])
                 )
                 await server['response'].join()
@@ -317,18 +317,16 @@ class HTTPOut:
 
         logger.info('%s -> %s: %s', path, mime_types[ext], module_path)
         await response.sendfile(
-            module_path,
-            content_type=mime_types[ext],
-            executor=worker_ctx.executor
+            module_path, content_type=mime_types[ext], executor=g.executor
         )
         # exit middleware without closing the connection
         return True
 
     async def _on_close(self, **server):
-        request_ctx = server['context']
-        worker_ctx = server['globals']
         logger = server['logger']
+        ctx = server['context']
+        g = server['globals']
 
-        if 'module_path' in request_ctx:
-            worker_ctx.caches[request_ctx.module_path] = None
-            logger.info('cache deleted: %s', request_ctx.module_path)
+        if 'module_path' in ctx:
+            g.caches[ctx.module_path] = None
+            logger.info('cache deleted: %s', ctx.module_path)
