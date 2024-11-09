@@ -17,6 +17,11 @@ class OptionalBuildExt(build_ext):
                 f'Failed to build {ext.name}. '
                 'Falling back to pure Python version.'
             )
+        finally:
+            for source in ext.sources:
+                if os.path.exists(source):
+                    os.unlink(source)
+                    print(f'Deleted: {source}')
 
 
 extensions = [

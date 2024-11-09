@@ -9,7 +9,7 @@ from libc.stdio cimport (FILE, fopen, fclose, fread, feof, ferror,
 def exec_module(module, code=None, size_t max_size=8 * 1048576):
     cdef FILE* fp
     cdef char[4096] buf
-    cdef size_t file_size, read_size
+    cdef size_t file_size, n
     cdef bytearray data
 
     if code is None:
@@ -29,12 +29,12 @@ def exec_module(module, code=None, size_t max_size=8 * 1048576):
         data = bytearray()
 
         while True:
-            read_size = fread(buf, 1, sizeof(buf), fp)
+            n = fread(buf, 1, sizeof(buf), fp)
 
-            if read_size <= 0:
+            if n <= 0:
                 break
 
-            data.extend(buf[:read_size])
+            data.extend(buf[:n])
 
         if ferror(fp):
             fclose(fp)
