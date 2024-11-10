@@ -19,9 +19,11 @@ class OptionalBuildExt(build_ext):
             )
         finally:
             for source in ext.sources:
-                if os.path.exists(source):
-                    os.unlink(source)
-                    print(f'Deleted: {source}')
+                path = os.path.join(self.build_lib, source)
+
+                if os.path.exists(path):
+                    os.unlink(path)
+                    print(f'Deleted: {path}')
 
 
 extensions = [
