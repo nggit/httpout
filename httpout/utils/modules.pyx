@@ -62,8 +62,8 @@ def cleanup_modules(modules, tuple excludes=()):
                 if value in excludes or name.startswith('__'):
                     continue
 
-                if value is not module and not isinstance(value,
-                                                          (type, ModuleType)):
+                if not (value is module or
+                        isinstance(value, (type, ModuleType))):
                     value_dict = getattr(value, '__dict__', None)
 
                     if value_dict:
