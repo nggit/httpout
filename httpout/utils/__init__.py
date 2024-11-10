@@ -41,8 +41,7 @@ def new_module(name, level=0, document_root=None):
     if os.path.isfile(module_path):
         if name in sys.modules:
             if ('__file__' in sys.modules[name].__dict__ and
-                    sys.modules[name].__file__
-                    .startswith(document_root)):
+                    sys.modules[name].__file__.startswith(document_root)):
                 del sys.modules[name]
 
             raise ImportError(f'module name conflict: {name}')

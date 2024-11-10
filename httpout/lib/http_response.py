@@ -86,8 +86,8 @@ class HTTPResponse:
         self.call_soon(self.response.set_content_type, content_type)
 
     async def _run_middleware(self):
-        worker_ctx = self.response.request.protocol.globals
-        middlewares = worker_ctx.options['_middlewares']['response']
+        g = self.response.request.protocol.globals
+        middlewares = g.options['_middlewares']['response']
         i = len(middlewares)
 
         while i > 0:
