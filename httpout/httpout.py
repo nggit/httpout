@@ -44,8 +44,10 @@ class HTTPOut:
         sys.path.insert(0, document_root)
 
         # provides __globals__, a worker-level context
-        worker['__globals__'] = new_module('__globals__')
+        module = new_module('__globals__')
+        worker['__globals__'] = module or ModuleType('__globals__')
         worker['modules'] = {'__globals__': worker['__globals__']}
+        py_import = builtins.__import__
 
         def wait(coro, timeout=None):
             return asyncio.run_coroutine_threadsafe(coro, loop).result(timeout)
@@ -76,8 +78,6 @@ class HTTPOut:
                 exec_module(module)
 
                 return module
-
-        py_import = builtins.__import__
 
         def ho_import(name, globals=None, locals=None, fromlist=(), level=0):
             if (name not in sys.builtin_module_names and
@@ -147,17 +147,15 @@ class HTTPOut:
             return py_import(name, globals, locals, fromlist, level)
 
         builtins.__import__ = ho_import
+        builtins.__globals__ = worker['__globals__']
 
         g.wait = wait
         g.caches = {}
         g.executor = MultiThreadExecutor(thread_pool_size)
         g.executor.start()
 
-        if worker['__globals__']:
-            builtins.__globals__ = worker['__globals__']
-            exec_module(worker['__globals__'])
-        else:
-            builtins.__globals__ = ModuleType('__globals__')
+        if module:
+            exec_module(module)
 
     async def _on_worker_stop(self, **worker):
         g = worker['globals']
