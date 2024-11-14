@@ -10,7 +10,7 @@ You just need to put your regular `.py` files as well as other static files in t
 It provides a native experience for running your script from the web.
 
 ## How does it work?
-httpout will assign every route either like `/hello.py` or `/index.py` with the name `__main__` and executes it as a module in a thread pool.
+httpout will assign every route either like `/hello.py` or `/index.py` with the name `__main__` and executes its corresponding file as a module in a thread pool.
 Monkey patching is done at the module-level by hijacking the [`__import__`](https://docs.python.org/3/library/functions.html#import__).
 
 In the submodules perspective, the `__main__` object points to the main module such as `/hello.py`, rather than pointing to `sys.modules['__main__']` or the web server itself.
