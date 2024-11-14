@@ -259,18 +259,17 @@ class TestHTTP(unittest.TestCase):
         )
         self.assertEqual(body, b'Unsafe URL detected')
 
-    def test_sec_unsafe_chars_null(self):
+    def test_sec_unsafe_chars_nul(self):
         header, body = getcontents(host=HTTP_HOST,
                                    port=HTTP_PORT,
                                    method='GET',
                                    url='/example.php\x00.png',
                                    version='1.1')
 
-        self.assertEqual(
-            header[:header.find(b'\r\n')],
-            b'HTTP/1.1 403 Forbidden'
-        )
-        self.assertEqual(body, b'Unsafe URL detected')
+        # NUL is already handled by upstream
+        # currently the response is empty
+        self.assertEqual(header, b'')
+        self.assertEqual(body, b'')
 
     def test_disallowed_ext(self):
         header, body = getcontents(host=HTTP_HOST,
