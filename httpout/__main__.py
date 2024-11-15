@@ -6,7 +6,7 @@ import tremolo
 
 from httpout import __version__, HTTPOut
 
-app = tremolo.Tremolo()
+app = tremolo.Application()
 
 HTTPOut(app)
 

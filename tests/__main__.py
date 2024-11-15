@@ -11,10 +11,10 @@ PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # makes imports relative from the repo directory
 sys.path.insert(0, PROJECT_DIR)
 
-from tremolo import Tremolo  # noqa: E402
+from tremolo import Application  # noqa: E402
 from httpout import HTTPOut  # noqa: E402
 
-app = Tremolo()
+app = Application()
 
 HTTPOut(app)
 
