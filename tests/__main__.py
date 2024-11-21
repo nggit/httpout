@@ -24,13 +24,14 @@ DOCUMENT_ROOT = os.path.join(PROJECT_DIR, 'examples')
 
 
 def main():
-    mp.set_start_method('spawn')
+    mp.set_start_method('spawn', force=True)
 
     p = mp.Process(
         target=app.run,
         kwargs=dict(
             host=HTTP_HOST, port=HTTP_PORT,
-            document_root=DOCUMENT_ROOT, app=None, debug=False
+            document_root=DOCUMENT_ROOT, app=None, debug=False,
+            server_name='HTTPOut'
         )
     )
     p.start()
