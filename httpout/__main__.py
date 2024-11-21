@@ -98,6 +98,6 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if 'server_name' not in options:
-        options['server_name'] = b'httpout'
+        options['server_name'] = 'HTTPOut'
 
     app.run(**options)
