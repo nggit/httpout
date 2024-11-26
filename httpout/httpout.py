@@ -148,6 +148,7 @@ class HTTPOut:
 
         builtins.__import__ = ho_import
         builtins.__globals__ = worker['__globals__']
+        builtins.exit = sys.exit
 
         g.wait = wait
         g.caches = {}
