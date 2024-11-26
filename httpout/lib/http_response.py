@@ -8,6 +8,7 @@ class HTTPResponse:
     def __init__(self, response):
         self.response = response
         self.loop = response.request.protocol.loop
+        self.logger = response.request.protocol.logger
         self.tasks = set()
 
     def __getattr__(self, name):
@@ -87,16 +88,19 @@ class HTTPResponse:
 
     async def _run_middleware(self):
         g = self.response.request.protocol.globals
+        ctx = self.response.request.protocol.context
         middlewares = g.options['_middlewares']['response']
         i = len(middlewares)
 
         while i > 0:
             i -= 1
 
-            if await middlewares[i][1](context=self.response.request.ctx,
+            if await middlewares[i][1](globals=g,
+                                       context=ctx,
+                                       loop=self.loop,
+                                       logger=self.logger,
                                        request=self.response.request,
-                                       response=self.response,
-                                       loop=self.loop):
+                                       response=self.response):
                 break
 
     async def write(self, data, **kwargs):
