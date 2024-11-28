@@ -19,8 +19,6 @@ from .utils import (
     is_safe_path, new_module, exec_module, cleanup_modules, mime_types
 )
 
-_INDEX_FILES = ('index.py', 'index.html')
-
 
 class HTTPOut:
     def __init__(self, app):
@@ -38,6 +36,9 @@ class HTTPOut:
             g.options.get('document_root', os.getcwd())
         )
         g.options['document_root'] = document_root
+        g.options['directory_index'] = g.options.get(
+            'directory_index', ['index.py', 'index.html']
+        )
 
         logger.info('entering directory: %s', document_root)
         os.chdir(document_root)
@@ -206,7 +207,7 @@ class HTTPOut:
             dirname = module_path
 
             # no file extension in the URL, try index.py, index.html, etc.
-            for basename in _INDEX_FILES:
+            for basename in g.options['directory_index']:
                 module_path = os.path.join(dirname, basename)
                 ext = os.path.splitext(basename)[-1]
 
