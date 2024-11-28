@@ -35,6 +35,8 @@ def usage(**context):
     print('                            E.g. "/path/to/fullchain.pem"')
     print('  --ssl-key                 SSL private key location')
     print('                            E.g. "/path/to/privkey.pem"')
+    print('  --directory-index         Index files to be served on directory-based URLs')  # noqa: E501
+    print('                            Must be separated by commas. E.g. "index.py,index.html"')  # noqa: E501
     print('  --debug                   Enable debug mode')
     print('                            Intended for development')
     print('  --log-level               Defaults to "DEBUG". See')
@@ -85,9 +87,14 @@ def threads(value, **context):
         return 1
 
 
+def indexes(value, **context):
+    context['options']['directory_index'] = value.split(',')
+
+
 if __name__ == '__main__':
     options = tremolo.utils.parse_args(
-        help=usage, bind=bind, version=version, thread_pool_size=threads
+        help=usage, bind=bind, version=version, thread_pool_size=threads,
+        directory_index=indexes
     )
 
     if sys.argv[-1] != sys.argv[0] and not sys.argv[-1].startswith('-'):
