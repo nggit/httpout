@@ -5,7 +5,6 @@ import builtins
 import os
 import sys
 
-from traceback import TracebackException
 from types import ModuleType
 
 from awaiter import MultiThreadExecutor
@@ -54,10 +53,10 @@ class HTTPOut:
             return asyncio.run_coroutine_threadsafe(coro, loop).result(timeout)
 
         def load_module(name, globals, level=0):
-            if globals['__name__'] == '__globals__':
-                modules = worker['modules']
-            else:
+            if '__server__' in globals:
                 modules = globals['__main__'].__server__['modules']
+            else:
+                modules = worker['modules']
 
             if name in modules:
                 # already imported
@@ -68,7 +67,7 @@ class HTTPOut:
             if module:
                 logger.info('%s: importing %s', globals['__name__'], name)
 
-                if globals['__name__'] != '__globals__':
+                if '__server__' in globals:
                     module.__main__ = globals['__main__']
                     module.__server__ = globals['__main__'].__server__
                     module.print = globals['__main__'].print
@@ -114,12 +113,12 @@ class HTTPOut:
                     return module
 
                 if name == 'httpout' or name.startswith('httpout.'):
-                    if globals['__name__'] == '__globals__':
-                        module = worker['modules'][globals['__name__']]
-                    else:
+                    if '__server__' in globals:
                         module = globals['__main__'].__server__['modules'][
                             globals['__name__']
                         ]
+                    else:
+                        module = worker['modules'][globals['__name__']]
 
                     # handles virtual imports,
                     # e.g. from httpout import request, response
@@ -128,14 +127,14 @@ class HTTPOut:
                             if child in module.__dict__:
                                 continue
 
-                            if (globals['__name__'] != '__globals__' and
+                            if ('__server__' in globals and
                                     child in module.__server__):
                                 module.__dict__[child] = module.__server__[
                                     child
                                 ]
                             elif child in worker and (
                                     child != 'app' or
-                                    globals['__name__'] == '__globals__'):
+                                    '__server__' not in globals):
                                 module.__dict__[child] = worker[child]
                             else:
                                 raise ImportError(
@@ -223,6 +222,21 @@ class HTTPOut:
 
             server['request'] = HTTPRequest(request, server)
             server['response'] = HTTPResponse(response)
+
+            if (request.protocol.options['ws'] and
+                    b'upgrade' in request.headers and
+                    b'connection' in request.headers and
+                    b'sec-websocket-key' in request.headers and
+                    request.headers[b'upgrade'].lower() == b'websocket'):
+                server['websocket'] = WebSocket(request, response)
+            else:
+                server['websocket'] = None
+
+            excludes = (server['response'].print,
+                        server['response'].run_coroutine,
+                        g.wait,
+                        *server.values())
+
             server['REQUEST_METHOD'] = request.method.decode('latin-1')
             server['SCRIPT_NAME'] = module_path[len(document_root):].replace(
                 os.sep, '/'
@@ -234,15 +248,6 @@ class HTTPOut:
             server['REQUEST_URI'] = request_uri
             server['REQUEST_SCHEME'] = request.scheme.decode('latin-1')
             server['DOCUMENT_ROOT'] = document_root
-
-            if (request.protocol.options['ws'] and
-                    b'upgrade' in request.headers and
-                    b'connection' in request.headers and
-                    b'sec-websocket-key' in request.headers and
-                    request.headers[b'upgrade'].lower() == b'websocket'):
-                server['websocket'] = WebSocket(request, response)
-            else:
-                server['websocket'] = None
 
             module = ModuleType('__main__')
             module.__file__ = module_path
@@ -271,40 +276,10 @@ class HTTPOut:
                     ctx.module_path = module_path
             except BaseException as exc:
                 await server['response'].join()
-
-                if not response.headers_sent():
-                    response.set_status(500, b'Internal Server Error')
-                    response.set_content_type(b'text/html; charset=utf-8')
-                    request.http_keepalive = False
-
-                if isinstance(exc, Exception):
-                    if request.protocol.options['debug']:
-                        te = TracebackException.from_exception(exc)
-                        await response.write(
-                            b'<ul><li>%s</li></ul>\n' % b'</li><li>'.join(
-                                html_escape(line)
-                                .encode() for line in te.format()
-                            )
-                        )
-                    else:
-                        await response.write(
-                            f'<ul><li>{exc.__class__.__name__}: '
-                            f'{html_escape(str(exc))}</li></ul>\n'
-                            .encode()
-                        )
-                elif isinstance(exc, SystemExit):
-                    if exc.code:
-                        await response.write(str(exc.code).encode())
-                else:
-                    request.protocol.print_exception(exc)
+                await server['response'].handle_exception(exc)
             finally:
                 await g.executor.submit(
-                    cleanup_modules, server['modules'], (module.print,
-                                                         module.run,
-                                                         module.wait,
-                                                         g,
-                                                         ctx,
-                                                         server['response'])
+                    cleanup_modules, server['modules'], excludes
                 )
                 await server['response'].join()
                 server['modules'].clear()
