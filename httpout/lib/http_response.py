@@ -28,31 +28,34 @@ class HTTPResponse:
             await self.tasks.pop()
 
     async def handle_exception(self, exc):
-        if not self.response.headers_sent():
-            self.response.set_status(500, b'Internal Server Error')
-            self.response.set_content_type(b'text/html; charset=utf-8')
-            self.response.request.http_keepalive = False
-
-        if isinstance(exc, Exception):
-            if self.response.request.protocol.options['debug']:
-                te = TracebackException.from_exception(exc)
-                await self.response.write(
-                    b'<ul><li>%s</li></ul>\n' % b'</li><li>'.join(
-                        html_escape(line)
-                        .encode() for line in te.format()
-                    )
-                )
-            else:
-                await self.response.write(
-                    f'<ul><li>{exc.__class__.__name__}: '
-                    f'{html_escape(str(exc))}</li></ul>\n'
-                    .encode()
-                )
-        elif isinstance(exc, SystemExit):
-            if exc.code:
-                await self.response.write(str(exc.code).encode())
+        if self.response.request.upgraded:
+            await self.response.request.protocol.handle_exception(exc)
         else:
-            self.response.request.protocol.print_exception(exc)
+            if not self.response.headers_sent():
+                self.response.set_status(500, b'Internal Server Error')
+                self.response.set_content_type(b'text/html; charset=utf-8')
+                self.response.request.http_keepalive = False
+
+            if isinstance(exc, Exception):
+                if self.response.request.protocol.options['debug']:
+                    te = TracebackException.from_exception(exc)
+                    await self.response.write(
+                        b'<ul><li>%s</li></ul>\n' % b'</li><li>'.join(
+                            html_escape(line)
+                            .encode() for line in te.format()
+                        )
+                    )
+                else:
+                    await self.response.write(
+                        f'<ul><li>{exc.__class__.__name__}: '
+                        f'{html_escape(str(exc))}</li></ul>\n'
+                        .encode()
+                    )
+            elif isinstance(exc, SystemExit):
+                if exc.code:
+                    await self.response.write(str(exc.code).encode())
+            else:
+                self.response.request.protocol.print_exception(exc)
 
     def run_coroutine(self, coro):
         fut = concurrent.futures.Future()
@@ -124,16 +127,19 @@ class HTTPResponse:
         middlewares = g.options['_middlewares']['response']
         i = len(middlewares)
 
-        while i > 0:
-            i -= 1
+        try:
+            while i > 0:
+                i -= 1
 
-            if await middlewares[i][1](globals=g,
-                                       context=ctx,
-                                       loop=self.loop,
-                                       logger=self.logger,
-                                       request=self.response.request,
-                                       response=self.response):
-                break
+                if await middlewares[i][1](globals=g,
+                                           context=ctx,
+                                           loop=self.loop,
+                                           logger=self.logger,
+                                           request=self.response.request,
+                                           response=self.response):
+                    break
+        except Exception as exc:
+            await self.response.request.protocol.handle_exception(exc)
 
     async def write(self, data, **kwargs):
         if not self.response.headers_sent():
