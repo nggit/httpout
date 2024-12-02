@@ -1,4 +1,12 @@
 
+from httpout import run
+
+
 print('Hi')
 
-raise ValueError
+
+async def main():
+    raise ValueError
+
+
+run(main())

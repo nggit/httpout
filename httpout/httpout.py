@@ -5,7 +5,6 @@ import builtins
 import os
 import sys
 
-from traceback import TracebackException
 from types import ModuleType
 
 from awaiter import MultiThreadExecutor
@@ -277,32 +276,7 @@ class HTTPOut:
                     ctx.module_path = module_path
             except BaseException as exc:
                 await server['response'].join()
-
-                if not response.headers_sent():
-                    response.set_status(500, b'Internal Server Error')
-                    response.set_content_type(b'text/html; charset=utf-8')
-                    request.http_keepalive = False
-
-                if isinstance(exc, Exception):
-                    if request.protocol.options['debug']:
-                        te = TracebackException.from_exception(exc)
-                        await response.write(
-                            b'<ul><li>%s</li></ul>\n' % b'</li><li>'.join(
-                                html_escape(line)
-                                .encode() for line in te.format()
-                            )
-                        )
-                    else:
-                        await response.write(
-                            f'<ul><li>{exc.__class__.__name__}: '
-                            f'{html_escape(str(exc))}</li></ul>\n'
-                            .encode()
-                        )
-                elif isinstance(exc, SystemExit):
-                    if exc.code:
-                        await response.write(str(exc.code).encode())
-                else:
-                    request.protocol.print_exception(exc)
+                await server['response'].handle_exception(exc)
             finally:
                 await g.executor.submit(
                     cleanup_modules, server['modules'], excludes
