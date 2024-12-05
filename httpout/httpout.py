@@ -112,7 +112,9 @@ class HTTPOut:
 
                     return module
 
-                if name == 'httpout' or name.startswith('httpout.'):
+                parent, _, child = name.partition('.')
+
+                if parent == 'httpout' and (child == '' or child in globals):
                     if '__server__' in globals:
                         module = globals['__main__'].__server__['modules'][
                             globals['__name__']

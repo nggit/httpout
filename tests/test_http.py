@@ -139,7 +139,8 @@ class TestHTTP(unittest.TestCase):
         self.assertEqual(header[:header.find(b'\r\n')], b'HTTP/1.1 200 OK')
         self.assertEqual(
             body,
-            b'3\r\nHi\n\r\n1F\r\n<ul><li>ValueError: </li></ul>\n\r\n0\r\n\r\n'
+            b'3\r\nHi\n\r\n27\r\n<ul><li>WebSocketException: </li></ul>\n\r\n'
+            b'0\r\n\r\n'
         )
 
     def test_exit_after_print(self):
