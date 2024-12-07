@@ -29,7 +29,7 @@ class HTTPResponse:
 
     async def handle_exception(self, exc):
         if self.response.request.upgraded:
-            await self.response.request.protocol.handle_exception(exc)
+            await self.response.handle_exception(exc)
         else:
             if not self.response.headers_sent():
                 self.response.set_status(500, b'Internal Server Error')
@@ -139,7 +139,7 @@ class HTTPResponse:
                                            response=self.response):
                     break
         except Exception as exc:
-            await self.response.request.protocol.handle_exception(exc)
+            await self.response.handle_exception(exc)
 
     async def write(self, data, **kwargs):
         if not self.response.headers_sent():
