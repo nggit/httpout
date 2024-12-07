@@ -12,8 +12,8 @@ from tremolo.exceptions import BadRequest, NotFound, Forbidden
 from tremolo.lib.websocket import WebSocket
 from tremolo.utils import html_escape
 
-from .lib.http_request import HTTPRequest
-from .lib.http_response import HTTPResponse
+from .request import HTTPRequest
+from .response import HTTPResponse
 from .utils import (
     is_safe_path, new_module, exec_module, cleanup_modules, mime_types
 )
