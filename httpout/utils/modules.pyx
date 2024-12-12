@@ -42,7 +42,7 @@ def exec_module(module, code=None, size_t max_size=8 * 1048576):
 
         fclose(fp)
 
-        code = compile(data.decode('utf-8'), '<string>', 'exec')
+        code = compile(data, '<string>', 'exec')
         exec(code, module.__dict__)
 
         return code
