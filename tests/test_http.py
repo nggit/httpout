@@ -52,7 +52,8 @@ class TestHTTP(unittest.TestCase):
                                    version='1.1')
 
         self.assertEqual(
-            header[:header.find(b'\r\n')], b'HTTP/1.1 201 Created'
+            header[:header.find(b'\r\n')],
+            b'HTTP/1.1 201 Created'
         )
         self.assertTrue(b'\r\nFoo: baz' in header)
         self.assertTrue(b'\r\nSet-Cookie: foo=bar; ' in header)
@@ -193,7 +194,8 @@ class TestHTTP(unittest.TestCase):
         )
 
         self.assertEqual(
-            header[:header.find(b'\r\n')], b'HTTP/1.1 400 Bad Request'
+            header[:header.find(b'\r\n')],
+            b'HTTP/1.1 400 Bad Request'
         )
 
     def test_private_file(self):
@@ -268,9 +270,10 @@ class TestHTTP(unittest.TestCase):
                                    version='1.1')
 
         # NUL is already handled by upstream
-        # currently the response is empty
-        self.assertEqual(header, b'')
-        self.assertEqual(body, b'')
+        self.assertEqual(
+            header[:header.find(b'\r\n')],
+            b'HTTP/1.0 400 Bad Request'
+        )
 
     def test_disallowed_ext(self):
         header, body = getcontents(host=HTTP_HOST,
