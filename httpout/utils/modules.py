@@ -11,7 +11,7 @@ def exec_module(module, code=None, max_size=8 * 1048576):
             raise ValueError(f'File {module.__file__} exceeds the max_size')
 
         with open(module.__file__, 'r') as f:
-            code = compile(f.read(), '<string>', 'exec')
+            code = compile(f.read(), module.__file__, 'exec')
             exec(code, module.__dict__)  # nosec B102
 
         return code
