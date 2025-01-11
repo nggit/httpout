@@ -10,6 +10,7 @@ from tremolo.utils import html_escape
 class HTTPResponse:
     def __init__(self, response):
         self.response = response
+        self.protocol = response.request.protocol
         self.loop = response.request.protocol.loop
         self.logger = response.request.protocol.logger
         self.tasks = set()
@@ -37,7 +38,7 @@ class HTTPResponse:
                 self.response.request.http_keepalive = False
 
             if isinstance(exc, Exception):
-                if self.response.request.protocol.options['debug']:
+                if self.protocol.options['debug']:
                     te = TracebackException.from_exception(exc)
                     await self.response.write(
                         b'<ul><li>%s</li></ul>\n' % b'</li><li>'.join(
@@ -55,7 +56,7 @@ class HTTPResponse:
                 if exc.code:
                     await self.response.write(str(exc.code).encode())
             else:
-                self.response.request.protocol.print_exception(exc)
+                self.protocol.print_exception(exc)
 
     def run_coroutine(self, coro):
         fut = concurrent.futures.Future()
@@ -121,29 +122,9 @@ class HTTPResponse:
     def set_content_type(self, content_type='text/html; charset=utf-8'):
         self.call_soon(self.response.set_content_type, content_type)
 
-    async def _run_middleware(self):
-        g = self.response.request.protocol.globals
-        ctx = self.response.request.protocol.context
-        middlewares = g.options['_middlewares']['response']
-        i = len(middlewares)
-
-        try:
-            while i > 0:
-                i -= 1
-
-                if await middlewares[i][1](globals=g,
-                                           context=ctx,
-                                           loop=self.loop,
-                                           logger=self.logger,
-                                           request=self.response.request,
-                                           response=self.response):
-                    break
-        except Exception as exc:
-            await self.response.handle_exception(exc)
-
     async def write(self, data, **kwargs):
         if not self.response.headers_sent():
-            await self._run_middleware()
+            await self.protocol.run_middlewares('response', reverse=True)
 
         await self.response.write(data, **kwargs)
 
