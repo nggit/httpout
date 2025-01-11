@@ -25,11 +25,24 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: List the modified files
+        run: echo "FILES_MODIFIED=$(git diff --name-only HEAD HEAD^ | xargs)" >> $GITHUB_ENV
+        if: ${{ !startsWith(matrix.os, 'windows-') }}
+
+      - name: List the modified files (Windows)
+        run: |
+          $FILES_MODIFIED = $(git diff --name-only HEAD HEAD^) -join ' '
+          echo "FILES_MODIFIED=$FILES_MODIFIED" | Out-File -FilePath $env:GITHUB_ENV
+        if: ${{ startsWith(matrix.os, 'windows-') }}
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python_version }}
+        if: ${{ contains(env.FILES_MODIFIED, '.py') }}
 
       - name: Install dependencies
         run: |
@@ -37,6 +50,7 @@ jobs:
           python -m pip install --upgrade coverage
           python -m pip install --upgrade awaiter
           python -m pip install --upgrade tremolo
+        if: ${{ contains(env.FILES_MODIFIED, '.py') }}
 
       - name: Lint
         run: |
@@ -44,32 +58,38 @@ jobs:
           python -m bandit --recursive httpout/
           python -m pip install --upgrade flake8
           python -m flake8 httpout/
-        if: ${{ matrix.os == 'ubuntu-20.04' && matrix.python_version == '3.13' }}
+        if: |
+          contains(env.FILES_MODIFIED, '.py') &&
+          matrix.os == 'ubuntu-20.04' && matrix.python_version == '3.13'
 
       - name: Run tests
         run: python -m tests
-        if: ${{ matrix.python_version != '3.13' }}
+        if: ${{ contains(env.FILES_MODIFIED, '.py') && matrix.python_version != '3.13' }}
 
       - name: Run tests with coverage
         run: |
           python -m coverage run -m tests
           python -m coverage combine
           mkdir artifact && mv .coverage artifact/.coverage.${{ matrix.os }}
-        if: ${{ matrix.python_version == '3.13' && !startsWith(matrix.os, 'windows-') }}
+        if: |
+          contains(env.FILES_MODIFIED, '.py') &&
+          matrix.python_version == '3.13' && !startsWith(matrix.os, 'windows-')
 
-      - name: Run tests with coverage on Windows
+      - name: Run tests with coverage (Windows)
         run: |
           python -m coverage run -m tests
           python -m coverage combine
           mkdir artifact && move .coverage artifact\.coverage.windows
         shell: cmd
-        if: ${{ matrix.python_version == '3.13' && startsWith(matrix.os, 'windows-') }}
+        if: |
+          contains(env.FILES_MODIFIED, '.py') &&
+          matrix.python_version == '3.13' && startsWith(matrix.os, 'windows-')
 
       - uses: actions/upload-artifact@v3
         with:
           path: artifact
           include-hidden-files: true
-        if: ${{ matrix.python_version == '3.13' }}
+        if: ${{ contains(env.FILES_MODIFIED, '.py') && matrix.python_version == '3.13' }}
 
   report:
     name: Upload coverage to SonarCloud Scan
@@ -77,6 +97,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: List the modified files
+        run: echo "FILES_MODIFIED=$(git diff --name-only HEAD HEAD^ | xargs)" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
@@ -86,16 +111,20 @@ jobs:
           python -m pip install --upgrade coverage
           python -m pip install --upgrade awaiter
           python -m pip install --upgrade tremolo
+        if: ${{ contains(env.FILES_MODIFIED, '.py') }}
 
       - uses: actions/download-artifact@v3
+        if: ${{ contains(env.FILES_MODIFIED, '.py') }}
 
       - name: Combine and view report
         run: |
           python -m coverage combine artifact
           python -m coverage report --show-missing --skip-covered
           python -m coverage xml
+        if: ${{ contains(env.FILES_MODIFIED, '.py') }}
 
       - uses: sonarsource/sonarcloud-github-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        if: ${{ contains(env.FILES_MODIFIED, '.py') }}
