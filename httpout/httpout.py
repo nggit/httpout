@@ -134,9 +134,7 @@ class HTTPOut:
                                 module.__dict__[child] = module.__server__[
                                     child
                                 ]
-                            elif child in worker and (
-                                    child != 'app' or
-                                    '__server__' not in globals):
+                            elif child in worker:
                                 module.__dict__[child] = worker[child]
                             else:
                                 raise ImportError(
