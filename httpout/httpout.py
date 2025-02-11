@@ -223,10 +223,9 @@ class HTTPOut:
             server['request'] = HTTPRequest(request, server)
             server['response'] = HTTPResponse(response)
 
-            if (request.protocol.options['ws'] and
-                    b'upgrade' in request.headers and
-                    b'connection' in request.headers and
+            if (g.options['ws'] and
                     b'sec-websocket-key' in request.headers and
+                    b'upgrade' in request.headers and
                     request.headers[b'upgrade'].lower() == b'websocket'):
                 server['websocket'] = WebSocket(request, response)
             else:
