@@ -41,9 +41,12 @@ def usage(**context):
     print('                            Intended for development')
     print('  --log-level               Defaults to "DEBUG". See')
     print('                            https://docs.python.org/3/library/logging.html#levels')  # noqa: E501
+    print('  --log-fmt                 Python\'s log format. If empty defaults to "%(message)s"')  # noqa: E501
     print('  --loop                    A fully qualified event loop name')
     print('                            E.g. "asyncio" or "asyncio.SelectorEventLoop"')  # noqa: E501
     print('                            It expects the respective module to already be present')  # noqa: E501
+    print('  --shutdown-timeout        Maximum number of seconds to wait after SIGTERM is')  # noqa: E501
+    print('                            sent to a worker process. Defaults to 30 (seconds)')  # noqa: E501
     print('  --version                 Print the httpout version and exit')
     print('  --help                    Show this help and exit')
     print()
@@ -68,11 +71,12 @@ def bind(value='', **context):
 
 def version(**context):
     print(
-        'httpout %s (tremolo %s, %s %d.%d.%d, %s)' % (__version__,
-                                                      tremolo.__version__,
-                                                      sys.implementation.name,
-                                                      *sys.version_info[:3],
-                                                      sys.platform)
+        'httpout %s (tremolo %s, %s %d.%d.%d, %s)' %
+        (__version__,
+         tremolo.__version__,
+         sys.implementation.name,
+         *sys.version_info[:3],
+         sys.platform)
     )
     return 0
 
