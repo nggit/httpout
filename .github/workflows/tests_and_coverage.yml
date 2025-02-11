@@ -85,8 +85,9 @@ jobs:
           contains(env.FILES_MODIFIED, '.py') &&
           matrix.python_version == '3.13' && startsWith(matrix.os, 'windows-')
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: artifact-${{ matrix.os }}
           path: artifact
           include-hidden-files: true
         if: ${{ contains(env.FILES_MODIFIED, '.py') && matrix.python_version == '3.13' }}
@@ -113,7 +114,11 @@ jobs:
           python -m pip install --upgrade tremolo
         if: ${{ contains(env.FILES_MODIFIED, '.py') }}
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifact
+          pattern: artifact-*
+          merge-multiple: true
         if: ${{ contains(env.FILES_MODIFIED, '.py') }}
 
       - name: Combine and view report

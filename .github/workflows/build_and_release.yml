@@ -28,7 +28,7 @@ jobs:
           python -m build --sdist --no-isolation
           for f in dist/httpout-*.tar.gz; do gzip -t "$f"; done
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/httpout-*.tar.gz
@@ -77,7 +77,7 @@ jobs:
               unzip -l "$f" | grep '\shttpout/utils/modules\..*\.so$';
           done
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/httpout-*.whl
@@ -95,7 +95,7 @@ jobs:
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist
