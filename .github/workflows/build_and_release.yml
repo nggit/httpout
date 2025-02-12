@@ -30,7 +30,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: dist-sdist
           path: dist/httpout-*.tar.gz
 
   build_wheels:
@@ -62,6 +62,8 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           python -m pip install --upgrade pip
           python -m pip install cibuildwheel==2.21.1
+          PYTHON_VERSION=${{ matrix.cibw_python }}
+          echo "PYTHON_VERSION=${PYTHON_VERSION%-*}" >> $GITHUB_ENV
 
       - name: Build wheels
         run: |
@@ -79,7 +81,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: dist-${{ matrix.os }}-${{ env.PYTHON_VERSION }}
           path: dist/httpout-*.whl
 
   release:
@@ -97,8 +99,9 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dist
           path: dist
+          pattern: dist-*
+          merge-multiple: true
 
       - run: |
           tree -L 2
