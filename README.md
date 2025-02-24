@@ -26,7 +26,7 @@ e.g. running other server processes or multithreaded applications as each route 
 
 ![httpout](https://raw.githubusercontent.com/nggit/httpout/main/examples/static/hello.gif)
 
-## Install
+## Installation
 ```
 python3 -m pip install --upgrade httpout
 ```
@@ -59,8 +59,6 @@ This is an overview of how to view request methods and read form data.
 
 ```python
 # form.py
-import sys
-
 from httpout import wait, request, response
 
 
@@ -71,7 +69,7 @@ method_bytes = request.method
 if method_str != 'POST':
     response.set_status(405, 'Method Not Allowed')
     print('Method Not Allowed')
-    sys.exit()
+    exit()
 
 
 # we can't use await outside the async context
@@ -84,8 +82,6 @@ print(method_str, method_bytes, form_data)
 It can also be written this way:
 ```python
 # form.py
-import sys
-
 from httpout import run, request, response
 
 
@@ -96,7 +92,7 @@ method_bytes = request.method
 if method_str != 'POST':
     response.set_status(405, 'Method Not Allowed')
     print('Method Not Allowed')
-    sys.exit()
+    exit()
 
 
 async def main():
