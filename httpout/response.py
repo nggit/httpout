@@ -10,13 +10,16 @@ from tremolo.utils import html_escape
 class HTTPResponse:
     def __init__(self, response):
         self.response = response
-        self.protocol = response.request.protocol
         self.loop = response.request.protocol.loop
         self.logger = response.request.protocol.logger
         self.tasks = set()
 
     def __getattr__(self, name):
         return getattr(self.response, name)
+
+    @property
+    def protocol(self):  # don't cache request.protocol
+        return self.response.request.protocol
 
     def create_task(self, coro):
         task = self.loop.create_task(coro)
@@ -31,7 +34,7 @@ class HTTPResponse:
     async def handle_exception(self, exc):
         if self.response.request.upgraded:
             await self.response.handle_exception(exc)
-        else:
+        elif not (self.protocol is None or self.protocol.is_closing()):
             if not self.response.headers_sent():
                 self.response.set_status(500, b'Internal Server Error')
                 self.response.set_content_type(b'text/html; charset=utf-8')
