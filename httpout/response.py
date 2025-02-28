@@ -32,9 +32,16 @@ class HTTPResponse:
             await self.tasks.pop()
 
     async def handle_exception(self, exc):
+        if self.protocol is None or self.protocol.transport is None:
+            return
+
+        if self.protocol.transport.is_closing():  # maybe stuck?
+            self.protocol.transport.abort()
+            return
+
         if self.response.request.upgraded:
             await self.response.handle_exception(exc)
-        elif not (self.protocol is None or self.protocol.is_closing()):
+        else:
             if not self.response.headers_sent():
                 self.response.set_status(500, b'Internal Server Error')
                 self.response.set_content_type(b'text/html; charset=utf-8')
