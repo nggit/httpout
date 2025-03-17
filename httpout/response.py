@@ -42,11 +42,12 @@ class HTTPResponse:
         if self.response.request.upgraded:
             await self.response.handle_exception(exc)
         else:
+            self.response.request.http_keepalive = False
+
             if isinstance(exc, Exception):
                 if not self.response.headers_sent():
                     self.response.set_status(500, b'Internal Server Error')
                     self.response.set_content_type(b'text/html; charset=utf-8')
-                    self.response.request.http_keepalive = False
 
                 if self.protocol.options['debug']:
                     te = TracebackException.from_exception(exc)
