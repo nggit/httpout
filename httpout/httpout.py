@@ -231,11 +231,6 @@ class HTTPOut:
             else:
                 server['websocket'] = None
 
-            excludes = (server['response'].print,
-                        server['response'].run_coroutine,
-                        g.wait,
-                        *server.values())
-
             server['REQUEST_METHOD'] = request.method.decode('latin-1')
             server['SCRIPT_NAME'] = module_path[len(document_root):].replace(
                 os.sep, '/'
@@ -278,7 +273,7 @@ class HTTPOut:
                 await server['response'].handle_exception(exc)
             finally:
                 await g.executor.submit(
-                    cleanup_modules, server['modules'], excludes
+                    cleanup_modules, server['modules'], g.options['debug']
                 )
                 await server['response'].join()
                 server['modules'].clear()
