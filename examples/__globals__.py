@@ -26,7 +26,8 @@ class _MyMiddleware:
     async def _on_response(self, **server):
         response = server['response']
 
-        del response.headers[b'x-debug']
+        if not response.headers_sent():
+            del response.headers[b'x-debug']
 
 
 app.logger.info('entering %s', __file__)
