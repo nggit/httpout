@@ -85,7 +85,7 @@ def cleanup_modules(modules, int debug=0):
                 module_dict[name] = None
 
                 if debug:
-                    print(' ' * debug, ',--', 'deleted:', name, value)
+                    print(' ' * debug, ',-- deleted:', name, value)
 
         if not module_name.startswith('__'):
             modules[module_name] = None
