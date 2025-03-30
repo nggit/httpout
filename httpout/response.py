@@ -87,12 +87,12 @@ class HTTPResponse:
         self.loop.call_soon_threadsafe(self.create_task, callback())
         return fut
 
-    def call_soon(self, func, *args):
+    def call_soon(self, func, *args, **kwargs):
         try:
             loop = asyncio.get_running_loop()
 
             if loop is self.loop:
-                return func(*args)
+                return func(*args, **kwargs)
         except RuntimeError:
             pass
 
@@ -100,7 +100,7 @@ class HTTPResponse:
 
         def callback():
             try:
-                result = func(*args)
+                result = func(*args, **kwargs)
 
                 if not fut.done():
                     fut.set_result(result)
@@ -120,11 +120,11 @@ class HTTPResponse:
     def set_header(self, name, value=''):
         self.call_soon(self.response.set_header, name, value)
 
-    def set_cookie(self, name, value='', expires=0, path='/', domain=None,
+    def set_cookie(self, name, value='', *, expires=0, path='/', domain=None,
                    secure=False, httponly=False, samesite=None):
         self.call_soon(
-            self.response.set_cookie, name, value, expires, path, domain,
-            secure, httponly, samesite
+            self.response.set_cookie, name, value, expires=expires, path=path,
+            domain=domain, secure=secure, httponly=httponly, samesite=samesite
         )
 
     def set_status(self, status=200, message='OK'):
