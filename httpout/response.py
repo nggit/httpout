@@ -10,8 +10,8 @@ from tremolo.utils import html_escape
 class HTTPResponse:
     def __init__(self, response):
         self.response = response
-        self.loop = response.request.protocol.loop
-        self.logger = response.request.protocol.logger
+        self.loop = response.request.server.loop
+        self.logger = response.request.server.logger
         self.tasks = set()
 
     def __getattr__(self, name):

@@ -7,7 +7,6 @@ import sys
 
 from types import ModuleType
 
-from awaiter import MultiThreadExecutor
 from tremolo.exceptions import BadRequest, NotFound, Forbidden
 from tremolo.lib.websocket import WebSocket
 from tremolo.utils import html_escape
@@ -22,15 +21,13 @@ from .utils import (
 class HTTPOut:
     def __init__(self, app):
         app.add_hook(self._on_worker_start, 'worker_start')
-        app.add_hook(self._on_worker_stop, 'worker_stop')
+        app.add_hook(self._on_close, 'close')
         app.add_middleware(self._on_request, 'request', priority=9999)  # low
-        app.add_middleware(self._on_close, 'close')
 
     async def _on_worker_start(self, **worker):
         loop = worker['loop']
         logger = worker['logger']
         g = worker['globals']
-        thread_pool_size = g.options.get('thread_pool_size', 5)
         document_root = os.path.abspath(
             g.options.get('document_root', os.getcwd())
         )
@@ -152,16 +149,9 @@ class HTTPOut:
 
         g.wait = wait
         g.caches = {}
-        g.executor = MultiThreadExecutor(thread_pool_size)
-        g.executor.start()
 
         if module:
             exec_module(module)
-
-    async def _on_worker_stop(self, **worker):
-        g = worker['globals']
-
-        await g.executor.shutdown()
 
     async def _on_request(self, **server):
         request = server['request']
@@ -258,7 +248,8 @@ class HTTPOut:
 
             try:
                 # execute module in another thread
-                result = await g.executor.submit(exec_module, module, code)
+                result = await g.executor.submit(exec_module,
+                                                 args=(module, code))
                 await server['response'].join()
 
                 if result:
@@ -273,7 +264,8 @@ class HTTPOut:
                 await server['response'].handle_exception(exc)
             finally:
                 await g.executor.submit(
-                    cleanup_modules, server['modules'], g.options['debug']
+                    cleanup_modules,
+                    args=(server['modules'], g.options['debug'])
                 )
                 await server['response'].join()
                 server['modules'].clear()
@@ -285,9 +277,8 @@ class HTTPOut:
             raise Forbidden(f'Disallowed file extension: {ext}')
 
         logger.info('%s -> %s: %s', path, mime_types[ext], module_path)
-        await response.sendfile(
-            module_path, content_type=mime_types[ext], executor=g.executor
-        )
+        await response.sendfile(module_path, content_type=mime_types[ext])
+
         # exit middleware without closing the connection
         return True
 
