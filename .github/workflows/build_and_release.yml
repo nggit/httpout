@@ -50,7 +50,7 @@ jobs:
         - 'cp311-*'
         - 'cp312-*'
         - 'cp313-*'
-        - 'pp311-*'
+        - 'pp310-*'
         cibw_arch: ['x86_64']
     timeout-minutes: 10
     steps:
